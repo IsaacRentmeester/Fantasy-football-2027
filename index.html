@@ -302,6 +302,8 @@ label.fld{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #toast.err{border-color:var(--red)}
 
+.livedot{color:var(--grass-lt);font-weight:700;font-size:11px;letter-spacing:.3px;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--grass);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
 
@@ -1912,9 +1914,10 @@ function renderPoll() {
 
   const voters = Object.values(L.votes || {});
   const total = voters.length;
-  $('#pollStatus').textContent =
-    total === 0 ? 'No votes yet — be the first.'
-    : total + (total === 1 ? ' person has' : ' people have') + ' voted.';
+  $('#pollStatus').innerHTML =
+    (total === 0 ? 'No votes yet — be the first.'
+      : total + (total === 1 ? ' person has' : ' people have') + ' voted.')
+    + ' <span class="livedot" title="Updates automatically as people vote">● live</span>';
 
   const url = location.origin + location.pathname + '?league=' + L.id;
   $('#shareUrl').textContent = url;
@@ -2040,6 +2043,60 @@ $('#btnLock').addEventListener('click', async () => {
     toast(v ? 'Draft date locked 🏆' : 'Unlocked');
   } catch (err) { toast('Could not lock: ' + err.message, true); }
 });
+
+/* ==================================================================
+   LIVE UPDATES
+   ================================================================== */
+
+/**
+ * Poll the league for changes so everyone's page reflects everyone else's
+ * votes, teams and messages without a manual refresh.
+ *
+ * Guarded so it can never destroy work in progress: it skips while the tab is
+ * hidden, while a field is focused (you are mid-type), and while power
+ * rankings are being reordered, since those hold unsaved local state. It also
+ * only re-renders when the document version actually moved, so an idle league
+ * costs one small request and no DOM churn.
+ */
+const LIVE_MS = 10000;
+let liveBusy = false;
+
+async function pollForUpdates() {
+  if (!S.leagueId || !S.league || liveBusy) return;
+  if (document.hidden) return;
+
+  const el = document.activeElement;
+  if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+
+  const activeEl = $('.view.on');
+  const view = activeEl ? activeEl.id.replace('v-', '') : '';
+  if (view === 'club' && S.club === 'power') return;   // unsaved reordering
+
+  liveBusy = true;
+  try {
+    const res = await api('GET', { id: S.leagueId });
+    const next = res.league;
+    if ((next.v || 0) === (S.league.v || 0)) return;    // nothing changed
+
+    S.league = next;
+    S.meta = res.meta;
+    S.powerDraft = null;
+
+    renderPoll();
+    renderHome();
+    renderMe();
+    if (view === 'teams') renderTeams();
+    if (view === 'club') renderClub();
+  } catch (_) {
+    /* offline or a blip — the next tick tries again */
+  } finally {
+    liveBusy = false;
+  }
+}
+
+setInterval(pollForUpdates, LIVE_MS);
+// Catch up immediately when someone comes back to the tab.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) pollForUpdates(); });
 
 /* ==================================================================
    DRAFT GUIDE
