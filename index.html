@@ -609,13 +609,14 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
 
     <div id="pollSetup">
       <div class="card">
-        <h3>Start a poll for your league</h3>
+        <h3>Start the draft-date poll</h3>
         <div class="setup">
           <div>
-            <label class="fld" for="newLeagueName">League name</label>
-            <input type="text" id="newLeagueName" placeholder="Fantasy Football 2027" maxlength="60">
+            <label class="fld" for="newLeagueName">Your team name</label>
+            <input type="text" id="newLeagueName" placeholder="e.g. Gronk Obama" maxlength="44">
+            <div class="hint" style="margin-top:6px">This creates your team in the league. Everyone else adds theirs from the same link.</div>
             <div class="spacer"></div>
-            <label class="fld" for="dateAdd">Add candidate days</label>
+            <label class="fld" for="dateAdd">Add draft dates</label>
             <div class="datepick">
               <input type="date" id="dateAdd" class="grow">
               <input type="time" id="timeAdd" style="max-width:130px" title="Optional time">
@@ -630,14 +631,15 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
           <div>
             <label class="fld">How it works</label>
             <div class="hint" style="line-height:1.75">
-              1. Add the dates you'd consider for the draft.<br>
-              2. Create the poll — you get a shareable link.<br>
-              3. Send that link to the league.<br>
-              4. Everyone taps every date they're free.<br>
-              5. The date with the highest percentage wins.
+              1. Put in your team name.<br>
+              2. Add the draft dates you'd consider.<br>
+              3. Create the poll — you get a shareable link.<br>
+              4. Send that link to the league.<br>
+              5. Everyone adds their team and taps the days they're free.<br>
+              6. The date with the highest percentage wins.
             </div>
             <div class="spacer"></div>
-            <button class="btn pri" id="btnCreate" style="width:100%">Create poll &amp; get link</button>
+            <button class="btn pri" id="btnCreate" style="width:100%;min-height:48px">🗓️ Create poll &amp; get link</button>
             <div class="spacer"></div>
             <label class="fld" for="joinId">Already have a poll ID?</label>
             <div class="datepick">
@@ -1815,7 +1817,7 @@ setInterval(renderCountdown, 1000);
 function renderPendingChips() {
   const el = $('#newDateChips');
   if (!S.pendingDates.length) {
-    el.innerHTML = '<span class="hint">No dates yet — add at least two.</span>';
+    el.innerHTML = '<span class="hint">No draft dates yet — add at least two.</span>';
     return;
   }
   el.innerHTML = S.pendingDates.sort().map((d) => `
@@ -1857,18 +1859,29 @@ $('#btnWeekends').addEventListener('click', () => {
 });
 
 $('#btnCreate').addEventListener('click', async () => {
-  if (S.pendingDates.length < 2) return toast('Add at least two dates', true);
+  if (S.pendingDates.length < 2) return toast('Add at least two draft dates', true);
   const btn = $('#btnCreate');
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Creating…';
   try {
+    const teamName = $('#newLeagueName').value.trim();
     const res = await api('POST', {
       action: 'create',
-      name: $('#newLeagueName').value.trim(),
+      name: 'Fantasy Football 2027',
       dates: S.pendingDates
     });
     S.meta = res.meta;
-    adoptLeague(res.league);
-    toast('Poll created — share the link!');
+
+    // The name entered here is the creator's team, not the league's title.
+    let league = res.league;
+    if (teamName) {
+      const r2 = await api('POST', { action:'addTeam', id: league.id,
+        name: teamName, emoji: S.newTeamEmoji, managers: [] });
+      league = r2.league;
+      const mine = league.teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
+      if (mine) { S.me.teamId = mine.id; saveMe(); }
+    }
+    adoptLeague(league);
+    toast(teamName ? `${teamName} added — share the link!` : 'Poll created — share the link!');
   } catch (err) {
     $('#setupMsg').innerHTML =
       `<div class="spacer"></div><div class="banner err">⚠️ Could not create the poll: ${esc(err.message)}.
@@ -1990,7 +2003,7 @@ function renderPoll() {
   const best = Math.max(0, ...L.dates.map((d) => counts[d].length));
 
   $('#voteGrid').innerHTML = L.dates.length === 0
-    ? '<div class="empty"><div class="ico">📅</div>No dates yet — add one below.</div>'
+    ? '<div class="empty"><div class="ico">📅</div>No draft dates yet — add one below.</div>'
     : L.dates.map((d) => {
         const c = counts[d].length;
         const pct = total ? Math.round((c / total) * 100) : 0;
@@ -2013,7 +2026,7 @@ function renderPoll() {
   const winner = L.dates.filter((d) => counts[d].length === best && best > 0);
   $('#tally').innerHTML = `
     <div><b>${total}</b> voted</div>
-    <div><b>${L.dates.length}</b> dates on the table</div>
+    <div><b>${L.dates.length}</b> draft dates on the table</div>
     ${best > 0 ? `<div>Leader: <b>${esc(winner.map((w) => fmtDate(w)).join(' / '))}</b> — <b>${Math.round((best/total)*100)}%</b> available</div>` : ''}`;
 
   const sel = $('#lockSel');
