@@ -87,10 +87,13 @@ p.lede{color:var(--muted);font-size:14px;max-width:66ch}
 .btn.sm{padding:6px 11px;font-size:12px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 
-input[type=text],input[type=date],input[type=number],select,textarea{
+input[type=text],input[type=date],input[type=time],input[type=number],select,textarea{
   background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r-sm);
   padding:10px 12px;font-size:13.5px;width:100%;transition:.15s;
 }
+/* Safari/Chrome paint the native date and time pickers dark-on-white. */
+input[type=date]::-webkit-calendar-picker-indicator,
+input[type=time]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.55);cursor:pointer}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--grass);box-shadow:0 0 0 3px rgba(46,163,106,.16)}
 label.fld{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
 
@@ -141,6 +144,22 @@ label.fld{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text
 /* ----------------------------------------------------------------- poll */
 .setup{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .datepick{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+
+/* Commissioner rows. A wrapping flexbox staggered these on a phone — labels
+   ended up floating over the wrong control — so each row is a grid whose
+   columns collapse to one full-width stack on small screens. */
+.cmdrow{display:grid;gap:10px;align-items:end;margin-bottom:11px}
+.cmdrow.add{grid-template-columns:1fr 132px auto}
+.cmdrow.lock{grid-template-columns:1fr auto}
+.cmdrow .btn{min-height:42px;white-space:nowrap}
+.cmdreset{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  border-top:1px solid var(--line);padding-top:13px;margin-top:2px}
+.cmdreset .hint{flex:1 1 100%}
+@media(max-width:600px){
+  .cmdrow.add,.cmdrow.lock{grid-template-columns:1fr}
+  .cmdrow .btn{width:100%;min-height:48px}
+  .cmdreset .btn{flex:1 1 140px;min-height:44px}
+}
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
 .chip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:650;background:var(--panel2);border:1px solid var(--line2)}
 .chip button{color:var(--muted);font-size:15px;line-height:1;padding:0 1px}
@@ -658,14 +677,15 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
         <div id="lockedBanner"></div>
 
         <div class="spacer"></div>
-        <label class="fld" for="voterTeamSel">Your team</label>
+        <label class="fld" for="voterTeamSel">Step 1 · Your team</label>
         <select id="voterTeamSel"></select>
         <div id="noTeamsHint"></div>
 
         <div class="spacer"></div>
+        <label class="fld">Step 2 · Tap every day that works, then save</label>
         <button class="btn pri" id="btnSubmitVote" style="width:100%;min-height:52px;font-size:15px">✅ Save my dates</button>
         <div id="myVoteState"></div>
-        <div class="hint" style="margin-top:7px">Pick your team, tap every day that works below, then save. You can change or withdraw it any time.</div>
+        <div class="hint" style="margin-top:7px">You can change or withdraw your answer any time.</div>
 
         <div class="votegrid" id="voteGrid"></div>
         <div class="tally" id="tally"></div>
@@ -689,26 +709,28 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
           </div>
         </div>
         <div class="spacer"></div>
-        <div class="datepick">
-          <div class="grow" style="min-width:150px">
+        <div class="cmdrow add">
+          <div>
             <label class="fld" for="moreDate">Add a day</label>
             <input type="date" id="moreDate">
           </div>
-          <div style="min-width:120px">
+          <div>
             <label class="fld" for="moreTime">Time (optional)</label>
             <input type="time" id="moreTime">
           </div>
           <button class="btn" id="btnMoreDate">➕ Add option</button>
-          <div class="grow" style="min-width:150px">
+        </div>
+
+        <div class="cmdrow lock">
+          <div>
             <label class="fld" for="lockSel">Lock final date</label>
             <select id="lockSel"><option value="">— not locked —</option></select>
           </div>
           <button class="btn gold" id="btnLock">🔒 Lock it in</button>
         </div>
 
-        <div class="spacer"></div>
-        <div class="row" style="border-top:1px solid var(--line);padding-top:12px">
-          <span class="hint grow">Finished a test run? Clear it out before the league joins.</span>
+        <div class="cmdreset">
+          <span class="hint">Finished a test run? Clear it out before the league joins.</span>
           <button class="btn sm" id="btnResetVotes">🔄 Reset votes</button>
           <button class="btn sm" id="btnResetAll">🧹 Clear everything</button>
         </div>
@@ -1901,13 +1923,20 @@ function renderPoll() {
   const teamSel = $('#voterTeamSel');
   const picked = S.me.teamId && L.teams.some((t) => t.id === S.me.teamId) ? S.me.teamId : '';
   teamSel.innerHTML =
-    '<option value="">— pick your team —</option>' +
+    `<option value="">${L.teams.length ? '— pick your team —' : '— no teams yet, create yours on the Teams tab —'}</option>` +
     L.teams.map((t) => `<option value="${esc(t.id)}" ${t.id === picked ? 'selected' : ''}>${esc(t.emoji)} ${esc(t.name)}${t.managers.length ? ' · ' + t.managers.map((m) => esc(mgrName(m))).join(', ') : ''}</option>`).join('');
 
+  // You vote as a team, so the team has to exist first. Say so plainly here
+  // rather than letting people hunt for why the dropdown is empty.
   $('#noTeamsHint').innerHTML = L.teams.length
-    ? `<div class="hint" style="margin-top:6px">Not listed? <b data-goto="teams" style="color:var(--grass-lt);cursor:pointer">Add your team →</b></div>`
-    : `<div class="spacer"></div><div class="banner warn">🏆 <div><b>No teams yet.</b>
-        <div style="margin-top:7px"><button class="btn sm" data-goto="teams">🏆 Add your team first</button></div></div></div>`;
+    ? `<div class="hint" style="margin-top:7px">Don't see your team? <b data-goto="teams" style="color:var(--grass-lt);cursor:pointer">Create it on the Teams tab first →</b>
+         — you need a team before you can pick draft days.</div>`
+    : `<div class="spacer"></div><div class="banner warn">🏆 <div>
+        <b>Make your team first.</b>
+        <div style="opacity:.9;margin-top:3px">Head to the <b>Teams</b> tab, add your team name and everyone on it,
+        then come back here to pick your draft days.</div>
+        <div style="margin-top:9px"><button class="btn sm" data-goto="teams">🏆 Go to Teams and create mine</button></div>
+        </div></div>`;
 
   $('#lockedBanner').innerHTML = L.locked
     ? `<div class="spacer"></div><div class="banner ok">🏆 <div><b>Draft locked in: ${esc(fmtLong(L.locked))}</b>
