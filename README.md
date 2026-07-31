@@ -21,12 +21,38 @@ folder belongs to it.
 | 🏠 **Home** | Live countdown to the draft (or to kickoff), plus the season's key dates |
 | 🏆 **Teams** | Every team with its logo and **all** of its co-managers. Claim yours here |
 | 🗓️ **Draft Day** | The date poll *and* the draft order lottery |
-| 📋 **Players** | 100 players ranked for **standard / non-PPR**, with pros, cons, and a target round |
+| 📋 **Players** | The full draft-eligible pool, scored 1–10 with a target round |
 | 📺 **Schedule** | All 18 weeks with kickoff times, TV networks, and bye weeks |
 | 💬 **Clubhouse** | Trash talk, weekly awards, power rankings, and the league constitution |
 
 Every tab is a big labelled button with its own icon — on a phone they sit in a
 thumb-reachable bar along the bottom of the screen.
+
+## The draft board
+
+180 players are ranked by hand for **standard / non-PPR** — 55 WR, 53 RB, 26 QB,
+18 TE, 12 K and 16 team defenses — each with who he is, previous teams, pros,
+cons and when to take him.
+
+Every player also carries:
+
+- **Score, 1–10.** Derived from overall rank on a log curve rather than a
+  straight line, because the gap between the RB1 and the RB6 is far larger than
+  the gap between RB60 and RB65. Rank 1 scores 10, the end of round one is
+  around 7.5, and deep bench names land near 3.
+- **Round.** Recalculated live for your league size (8/10/12/14), shown with the
+  pick range — "Rd 3 (25–36)".
+
+**The rest of the pool fills itself in.** On load the board pulls every rostered,
+draft-eligible player from Sleeper's public feed and appends anyone not already
+ranked, tagged as undrafted so the tail is never mistaken for a ranking. Free
+agents and non-fantasy positions are skipped. That feed is several megabytes, so
+the result is cached for 24 hours and replayed from local storage after the
+first visit.
+
+Live data also corrects the ranked board — current team, age, experience,
+college and injury designation — so a trade or an IR move fixes itself without a
+code change.
 
 ## Teams and co-managers
 

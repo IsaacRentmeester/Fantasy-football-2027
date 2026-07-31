@@ -209,7 +209,16 @@ label.fld{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text
 .posK{background:rgba(150,150,170,.18);color:#b8b8c8}
 .posDST{background:rgba(160,120,200,.2);color:#c4a8e0}
 .plright{text-align:right;flex:none}
-.plval{font-size:12px;font-weight:750;font-variant-numeric:tabular-nums}
+.plval{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.plscore{
+  display:inline-block;min-width:46px;padding:4px 9px;border-radius:8px;margin-bottom:3px;
+  font-size:15px;font-weight:820;font-variant-numeric:tabular-nums;letter-spacing:-.4px;text-align:center;
+}
+.sc-elite{background:linear-gradient(150deg,rgba(217,176,97,.34),rgba(217,176,97,.12));border:1px solid var(--gold);color:var(--gold)}
+.sc-great{background:rgba(46,163,106,.22);border:1px solid var(--grass);color:var(--grass-lt)}
+.sc-good{background:rgba(90,159,224,.18);border:1px solid rgba(90,159,224,.45);color:#9fc9f0}
+.sc-ok{background:var(--bg2);border:1px solid var(--line2);color:var(--muted)}
+.sc-deep{background:var(--bg2);border:1px solid var(--line);color:var(--muted2)}
 .val-up{color:var(--grass-lt)}
 .val-dn{color:var(--red)}
 .val-ev{color:var(--muted2)}
@@ -696,7 +705,7 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
   <!-- ============================================================ GUIDE -->
   <section class="view" id="v-guide">
     <h2 class="sec">Draft guide — standard scoring</h2>
-    <p class="lede">Ranked for <b>non-PPR</b>: receptions are worth nothing, so touchdown equity and rushing volume carry the day. <b>VAL</b> compares my standard rank against where the market drafts him — green means he's usually available later than he should be.</p>
+    <p class="lede">Ranked for <b>non-PPR</b>: receptions are worth nothing, so touchdown equity and rushing volume carry the day. <b>Score</b> is talent out of 10, <b>Rd</b> is the round he should go in your league size, and <b>VAL</b> compares my rank against market ADP — green means he usually lasts longer than he should.</p>
     <div class="spacer"></div>
 
     <div class="toolbar">
@@ -723,11 +732,18 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
       <select id="fBye" style="max-width:150px"><option value="">🗓️ Any bye week</option></select>
       <select id="fSort" style="max-width:190px">
         <option value="rk">↕️ Best available</option>
+        <option value="score">↕️ Talent score</option>
         <option value="val">↕️ Best value vs ADP</option>
         <option value="adp">↕️ Market ADP</option>
         <option value="name">↕️ Name A–Z</option>
       </select>
-      <button class="btn sm" id="btnEnrich" title="Pull current teams, ages, colleges and injury status from Sleeper's public API">🔄 Sync live rosters</button>
+      <select id="fSize" style="max-width:150px" title="Rounds are calculated for this league size">
+        <option value="8">👥 8-team</option>
+        <option value="10">👥 10-team</option>
+        <option value="12" selected>👥 12-team</option>
+        <option value="14">👥 14-team</option>
+      </select>
+      <button class="btn sm" id="btnEnrich" title="Pull every rostered draft-eligible player plus current teams, ages, colleges and injury status from Sleeper">🔄 Sync full pool</button>
       <button class="btn sm" id="btnClearF">✕ Clear</button>
     </div>
 
@@ -1545,6 +1561,7 @@ const S = {
   fTeam: '',
   fBye: '',
   sort: 'rk',
+  leagueSize: 12,
   synced: false,
   openPlayer: null,
   week: 1,
@@ -2015,10 +2032,13 @@ $('#plSearch').addEventListener('input', (e) => {
   renderGuide();
 });
 
-['fTeam', 'fBye', 'fSort'].forEach((id) => {
+['fTeam', 'fBye', 'fSort', 'fSize'].forEach((id) => {
   $('#' + id).addEventListener('change', (e) => {
     if (id === 'fSort') S.sort = e.target.value;
-    else S[id] = e.target.value;
+    else if (id === 'fSize') {
+      S.leagueSize = +e.target.value;
+      localStorage.setItem('ffhub_size', S.leagueSize);
+    } else S[id] = e.target.value;
     renderGuide();
   });
 });
@@ -2045,6 +2065,36 @@ function fillFilters() {
 
 const FLEX = ['RB', 'WR', 'TE'];
 
+/**
+ * Talent score, 1–10, derived from overall standard-scoring rank.
+ *
+ * Log curve rather than linear: the gap between the RB1 and the RB6 is far
+ * bigger than the gap between RB60 and RB65, so a straight line would badly
+ * overrate the middle of the board. 11 - log2(rank+1) puts the top pick at
+ * 10, the end of round one near 7.5, and the last useful bench player near 3.
+ */
+function scoreOf(p) {
+  const s = 11 - Math.log2((p.rk || 999) + 1);
+  return Math.max(1, Math.min(10, Math.round(s * 10) / 10));
+}
+
+/** Which round this player goes in, for the configured league size. */
+function roundOf(p) {
+  if (p.unranked) return null;
+  return Math.max(1, Math.ceil(p.rk / S.leagueSize));
+}
+
+/** Pick range inside that round, e.g. "Rd 3 (25–36)". */
+function roundLabel(p) {
+  const r = roundOf(p);
+  if (!r) return 'Undrafted';
+  const first = (r - 1) * S.leagueSize + 1;
+  return 'Rd ' + r + ' (' + first + '–' + (first + S.leagueSize - 1) + ')';
+}
+
+const scoreClass = (v) => v >= 8.5 ? 'sc-elite' : v >= 7 ? 'sc-great'
+  : v >= 5.5 ? 'sc-good' : v >= 4 ? 'sc-ok' : 'sc-deep';
+
 function filtered() {
   const list = PLAYERS.filter((p) => {
     if (S.pos === 'FLEX') { if (!FLEX.includes(p.p)) return false; }
@@ -2065,6 +2115,7 @@ function filtered() {
     rk:   (a, b) => a.rk - b.rk,
     adp:  (a, b) => a.adp - b.adp,
     val:  (a, b) => (b.adp - b.rk) - (a.adp - a.rk),
+    score:(a, b) => scoreOf(b) - scoreOf(a) || a.rk - b.rk,
     name: (a, b) => a.n.localeCompare(b.n),
   };
   return list.sort(by[S.sort] || by.rk);
@@ -2076,6 +2127,7 @@ function playerRow(p) {
   const cls = delta >= 6 ? 'val-up' : delta <= -6 ? 'val-dn' : 'val-ev';
   const sign = delta > 0 ? '+' : '';
   const tierCls = p.tr === 1 ? 't1' : p.tr === 2 ? 't2' : '';
+  const score = scoreOf(p);
   const open = S.openPlayer === p.n;
   const posRank = PLAYERS.filter((x) => x.p === p.p && x.rk <= p.rk).length;
 
@@ -2098,14 +2150,16 @@ function playerRow(p) {
       </div>
     </div>
     <div class="plright">
-      <div class="plval ${cls}">${sign}${delta} VAL</div>
-      <div class="plrd">ADP ${p.adp}</div>
+      <div class="plscore ${scoreClass(score)}" title="Talent score out of 10">${score}</div>
+      <div class="plrd">${esc(roundLabel(p))}</div>
+      <div class="plval ${cls}">${sign}${delta} VAL · ADP ${p.adp}</div>
     </div>
     <div class="pdet">
       <div class="pbox"><h4 class="h-who">● Who he is</h4><p>${esc(whoIs(p))}</p></div>
       <div class="pbox"><h4 class="h-pro">▲ Why to draft</h4><p>${esc(p.pro)}</p></div>
       <div class="pbox"><h4 class="h-con">▼ What could go wrong</h4><p>${esc(p.con)}</p></div>
-      <div class="pbox"><h4 class="h-when">◆ When to draft</h4><p>${esc(p.when)}</p></div>
+      <div class="pbox"><h4 class="h-when">◆ When to draft</h4><p>${esc(p.when)}</p>
+        <p style="margin-top:7px;color:var(--gold);font-weight:650">Score ${score}/10 · ${esc(roundLabel(p))} in a ${S.leagueSize}-team league</p></div>
     </div>
   </div>`;
 }
@@ -2178,7 +2232,15 @@ $('#guideBody').addEventListener('click', (e) => {
    browser, so it is not subject to any server-side allowlist.
    Two jobs: enrich the ranked board with live bio/injury data, and append
    every other draft-eligible player so nothing on an NFL roster is missing. */
-$('#btnEnrich').addEventListener('click', async () => {
+$('#btnEnrich').addEventListener('click', () => syncRosters(false));
+
+/**
+ * Pull the full NFL player universe from Sleeper.
+ *
+ * The feed is several megabytes, so the derived result is cached for 24h and
+ * replayed from localStorage on later loads rather than re-downloaded.
+ */
+async function syncRosters(auto) {
   const btn = $('#btnEnrich');
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Syncing…';
   try {
@@ -2234,15 +2296,70 @@ $('#btnEnrich').addEventListener('click', async () => {
     });
 
     S.synced = true;
+    cachePool();
     fillFilters();
     renderGuide();
-    toast(`Synced — ${added} more players added, ${moved} team change${moved === 1 ? '' : 's'}, ${flagged} injury flag${flagged === 1 ? '' : 's'}`);
+    if (!auto) {
+      toast(`Synced — ${added} more players added, ${moved} team change${moved === 1 ? '' : 's'}, ${flagged} injury flag${flagged === 1 ? '' : 's'}`);
+    }
   } catch (err) {
-    toast('Sleeper sync failed: ' + err.message, true);
+    if (!auto) toast('Sleeper sync failed: ' + err.message, true);
   } finally {
-    btn.disabled = false; btn.textContent = '🔄 Sync live rosters';
+    btn.disabled = false; btn.textContent = '🔄 Sync full pool';
   }
-});
+}
+
+/** Persist the synced pool so the multi-megabyte feed is fetched once a day. */
+function cachePool() {
+  try {
+    const added = PLAYERS.filter((p) => p.unranked)
+      .map((p) => [p.n, p.p, p.t, p.age || 0, p.exp == null ? -1 : p.exp, p.college || '', p.injury || '']);
+    const enrich = {};
+    PLAYERS.filter((p) => !p.unranked).forEach((p) => {
+      if (p.age || p.college || p.injury) {
+        enrich[p.n] = [p.t, p.age || 0, p.exp == null ? -1 : p.exp, p.college || '', p.injury || ''];
+      }
+    });
+    localStorage.setItem('ffhub_pool', JSON.stringify({ ts: Date.now(), added, enrich }));
+  } catch (_) { /* quota — the sync button still works */ }
+}
+
+/** Replay a cached pool. Returns true if it was fresh enough to use. */
+function loadPool() {
+  try {
+    const c = JSON.parse(localStorage.getItem('ffhub_pool') || 'null');
+    if (!c || Date.now() - c.ts > 24 * 3600 * 1000) return false;
+
+    const known = new Set(PLAYERS.map((p) => p.n.toLowerCase()));
+    Object.keys(c.enrich || {}).forEach((n) => {
+      const p = PLAYERS.find((x) => x.n === n);
+      if (!p) return;
+      const [t, age, exp, college, injury] = c.enrich[n];
+      if (t) p.t = t;
+      if (age) p.age = age;
+      if (exp >= 0) p.exp = exp;
+      if (college) p.college = college;
+      if (injury) p.injury = injury;
+    });
+
+    let rank = PLAYERS.length;
+    (c.added || []).forEach(([n, pos, t, age, exp, college, injury]) => {
+      if (known.has(n.toLowerCase())) return;
+      known.add(n.toLowerCase());
+      rank++;
+      PLAYERS.push({
+        n, p: pos, t, rk: rank, adp: rank, tr: 9, unranked: true,
+        age: age || undefined, exp: exp >= 0 ? exp : undefined,
+        college: college || '', injury: injury || undefined,
+        pro: 'On an NFL roster and draft-eligible, but outside the ranked board — a deep-league or injury-replacement name rather than a target.',
+        con: 'No defined fantasy role right now. Treat the ordering here as alphabetical noise, not a ranking.',
+        when: 'Undrafted in a standard 12-team league. Watch the waiver wire instead.',
+      });
+    });
+    S.synced = true;
+    return true;
+  } catch (_) { return false; }
+}
 
 /* ==================================================================
    SCHEDULE
@@ -3010,6 +3127,13 @@ function syncPowerNotes() {
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'your local timezone';
   $('#tileGuideSub').textContent =
     PLAYERS.length + ' players ranked for standard scoring with pros, cons, and target rounds.';
+
+  S.leagueSize = +(localStorage.getItem('ffhub_size') || 12);
+  const sizeSel = $('#fSize');
+  if (sizeSel) sizeSel.value = String(S.leagueSize);
+
+  // Full draft pool: replay today's cache, otherwise fetch it quietly once.
+  if (!loadPool()) setTimeout(() => syncRosters(true), 600);
 
   renderHome();
   renderMe();
