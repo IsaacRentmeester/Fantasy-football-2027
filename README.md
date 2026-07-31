@@ -1,13 +1,13 @@
 # Fantasy Football Hub — 2026 Season
 
-One shareable link that is the homebase for your league: vote on the draft date,
-study a standard-scoring draft board, see every game's kickoff time, and talk
-trash in one thread.
+One link for the whole league — the deployment URL, nothing appended. Open it
+and you're in: vote on the draft date, add your team, study a standard-scoring
+draft board, see every game's kickoff time, and talk trash in one thread.
 
 ```
-fantasy/index.html        — the whole app (HTML + CSS + JS, no build step)
-fantasy/api/league.js     — serverless API for shared state
-fantasy/vercel.json       — deploy config
+index.html        — the whole app (HTML + CSS + JS, no build step)
+api/league.js     — serverless API for shared state
+vercel.json       — deploy config
 ```
 
 This folder is self-contained. Deploy it as its own Vercel project with
@@ -97,34 +97,57 @@ The hub is built mobile-first: bottom navigation, 48px minimum tap targets, and
 no horizontal scrolling at 390px. On a computer the **⛶** button in the top bar
 switches to full screen for draft night.
 
+## One link, no setup
+
+There is a single hub and a single link: the deployment URL itself. Nobody
+creates a poll, nobody generates or forwards a private link, and there is
+nothing to join.
+
+The first person to open the site provisions the hub server-side with **every
+day from Aug 5 to kickoff (Sep 9) already on the board** — 36 days. Everyone
+after that lands in the same document: same dates, same teams, same chat.
+
+The id is fixed (`HUB_ID = 'league'` in both `index.html` and
+`api/league.js` — keep them in step). Older `?league=<id>` links still resolve,
+so anything already shared keeps working.
+
 ## How the draft-date poll works
 
-1. Open the page, add the dates you'd consider, hit **Create poll**.
-2. Copy the link — it looks like `.../fantasy-football-hub.html?league=f3aowrw5e9`.
-3. Send it to the league. Anyone who opens it sees the same poll.
-4. Each person types their name and taps **every** date that works for them.
-5. The percentage under each date is the share of voters available that day, so
-   the highest percentage is the date the most people can actually make. The
+1. Add your team on the **Teams** tab, with everyone who's on it.
+2. On **Draft Day**, pick your team from the dropdown.
+3. Tap **every** day that works for you, then **Save my dates**.
+4. The percentage under each day is the share of *teams* available then, so the
+   highest percentage is the day the most of the league can actually make. The
    leader gets a 👑.
+5. **Where the league stands** lists every day that got votes, best first, with
+   the teams behind each one and who still owes a vote.
 6. When you've decided, use **Lock it in**. The Home countdown retargets to
    draft day.
 
 Voting is multi-select on purpose. Asking "which single date do you want" tends
-to split a group across five options with no majority; asking "which dates can
-you make" finds the one that actually works.
+to split a group across thirty-six options with no majority; asking "which days
+can you make" finds the one that actually works.
 
-Votes are keyed per browser, so anyone can change their answer later without
-double-counting.
+**One vote per team, not per phone.** The vote is keyed by team, so a
+three-person team can't outvote a solo manager, and any of its people can cast,
+change, or withdraw it from any device. Selecting a team that has already voted
+loads its current answer so you adjust it rather than silently replacing a
+teammate's picks. **Withdraw my vote** takes the team off every day it picked.
 
 ## What gets saved
 
 Everything shared lives server-side against the configured store, so it is the
 same for everyone on the link and survives reloads and restarts:
 
-league name · candidate dates · every vote and who cast it · the locked draft
-date · every team with its logo · every person on each team and their role ·
-the drawn draft order · weekly awards · power rankings · the constitution ·
-every message on the board
+league name · the Aug 5 → kickoff draft dates · every team's vote · the locked
+draft date · every team with its logo · every person on each team and their
+role · the drawn draft order · weekly awards · power rankings · the
+constitution · every message on the board
+
+Teams stay editable from the Teams tab after they're created: add a person,
+change someone's role, drop a person, rename the team, or delete it outright.
+Deleting a team also clears its vote, its awards, and its slot in the drawn
+draft order rather than leaving dangling references.
 
 The only thing kept per-device is which person *you* are, so the app knows whose
 vote to update — that is deliberately local.
@@ -217,7 +240,7 @@ or Yahoo (which default to PPR):
 ## Local development
 
 ```bash
-cd fantasy && python3 -m http.server 7430   # static only; the poll needs the API
+python3 -m http.server 7430   # static only; the poll needs the API
 ```
 
 For the poll and board you need the serverless function running, which means

@@ -143,6 +143,29 @@ async function writeRaw(key, value) {
 
 const docKey = (id) => `ffhub:league:${id}`;
 
+/*
+ * The league has exactly one hub, so the bare deployment URL is the link
+ * everyone shares. There is no "create a poll" step and no per-person link to
+ * keep track of: the first person to open the site provisions the hub with
+ * every day from Aug 5 to kickoff already on the board, and from then on
+ * everybody lands in the same document.
+ */
+const HUB_ID = 'league';
+const HUB_START = '2026-08-05';
+const HUB_END = '2026-09-09';   // kickoff — Seahawks host Patriots
+
+/** Every day in the draft window, inclusive, as YYYY-MM-DD. */
+function hubDates() {
+  const out = [];
+  const d = new Date(HUB_START + 'T12:00:00Z');
+  const end = new Date(HUB_END + 'T12:00:00Z');
+  while (d <= end) {
+    out.push(d.toISOString().slice(0, 10));
+    d.setUTCDate(d.getUTCDate() + 1);
+  }
+  return out;
+}
+
 /**
  * Fill in fields added after a league was first created, so documents written
  * by an older deploy keep working instead of throwing on a missing array.
@@ -179,6 +202,29 @@ async function loadLeague(id) {
 }
 
 /**
+ * Load the hub, creating it on first contact so nobody has to set it up.
+ *
+ * Two people opening the link at the same moment both try to provision it;
+ * the second re-reads afterwards and takes whichever document landed, so the
+ * race costs a wasted write rather than a lost league.
+ */
+async function loadOrCreateHub() {
+  const existing = await loadLeague(HUB_ID);
+  if (existing) return existing;
+
+  const doc = normalize({
+    id: HUB_ID,
+    v: 0,
+    name: 'Fantasy Football 2027',
+    created: Date.now(),
+    updated: Date.now(),
+    dates: hubDates(),
+  });
+  await writeRaw(docKey(HUB_ID), JSON.stringify(doc));
+  return (await loadLeague(HUB_ID)) || doc;
+}
+
+/**
  * Read → mutate → write, with an optimistic version check.
  *
  * The REST APIs behind both drivers are stateless, so there is no true
@@ -189,7 +235,7 @@ async function loadLeague(id) {
 async function mutate(id, fn) {
   let lastErr;
   for (let attempt = 0; attempt < 4; attempt++) {
-    const doc = await loadLeague(id);
+    const doc = id === HUB_ID ? await loadOrCreateHub() : await loadLeague(id);
     if (!doc) return { error: 'not_found' };
 
     const before = doc.v || 0;
@@ -281,12 +327,27 @@ const ACTIONS = {
       return { error: 'voter limit reached' };
     }
     const team = findTeam(doc, body.teamId);
+    // One vote per team. Clear anything already filed for this team under a
+    // different key so a three-person team cannot outvote a solo manager.
+    if (team) {
+      for (const [k, v] of Object.entries(doc.votes)) {
+        if (k !== voter && v.teamId === team.id) delete doc.votes[k];
+      }
+    }
     doc.votes[voter] = { name, teamId: team ? team.id : null, picks, ts: Date.now() };
   },
 
   unvote(doc, body) {
     const voter = clean(body.voter, 40);
     if (voter) delete doc.votes[voter];
+    // Take the whole team off the board, including any vote an older client
+    // filed under a per-device key.
+    const team = findTeam(doc, body.teamId);
+    if (team) {
+      for (const [k, v] of Object.entries(doc.votes)) {
+        if (v.teamId === team.id) delete doc.votes[k];
+      }
+    }
   },
 
   addDates(doc, body) {
@@ -353,7 +414,10 @@ const ACTIONS = {
     if (!team) return { error: 'team not found' };
     doc.teams = doc.teams.filter((t) => t.id !== team.id);
     // Drop the reference everywhere rather than leaving dangling ids behind.
-    Object.values(doc.votes).forEach((v) => { if (v.teamId === team.id) v.teamId = null; });
+    // The poll is one vote per team, so a deleted team's vote goes with it.
+    for (const [k, v] of Object.entries(doc.votes)) {
+      if (v.teamId === team.id) delete doc.votes[k];
+    }
     doc.messages.forEach((m) => { if (m.teamId === team.id) m.teamId = null; });
     doc.awards = doc.awards.filter((a) => a.teamId !== team.id);
     if (doc.order) doc.order.list = doc.order.list.filter((id) => id !== team.id);
@@ -458,6 +522,24 @@ const ACTIONS = {
     doc.locked = d;
   },
 
+  /** Wipe the votes but keep the dates and teams — re-run the poll. */
+  resetVotes(doc) {
+    doc.votes = {};
+    doc.locked = null;
+  },
+
+  /** Clear everything a test run created and put the full window back up. */
+  resetAll(doc) {
+    doc.votes = {};
+    doc.teams = [];
+    doc.messages = [];
+    doc.awards = [];
+    doc.order = null;
+    doc.power = null;
+    doc.locked = null;
+    doc.dates = hubDates();
+  },
+
   rename(doc, body) {
     const n = clean(body.name, LIMITS.leagueName);
     if (n) doc.name = n;
@@ -522,7 +604,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'GET') {
       const id = clean((req.query && req.query.id) || '', 40);
       if (!id) return res.status(200).json({ ok: true, meta });
-      const league = await loadLeague(id);
+      const league = id === HUB_ID ? await loadOrCreateHub() : await loadLeague(id);
       if (!league) return res.status(404).json({ ok: false, error: 'not_found', meta });
       return res.status(200).json({ ok: true, league, meta });
     }

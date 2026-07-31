@@ -150,6 +150,30 @@ label.fld{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text
 .sharebar code{font-family:var(--mono);font-size:12px;color:var(--grass-lt);word-break:break-all;flex:1;min-width:160px}
 
 .votegrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));margin-top:14px}
+.votegrid.compact{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.votegrid.compact .vopt{padding:10px 11px}
+.votegrid.compact .vdate{font-size:14.5px;margin:1px 0 5px}
+.votegrid.compact .vpct{font-size:16px}
+.votegrid.compact .vday{font-size:10px}
+.votegrid.compact .vwho{display:none}
+/* The 36-day grid is always compact, so the per-tile "who picked this" line is
+   hidden there. This board is where you actually read the answer. */
+.resrow{
+  position:relative;overflow:hidden;display:flex;gap:12px;align-items:flex-start;
+  padding:11px 13px;border-radius:var(--r-sm);border:1.5px solid var(--line2);
+  background:var(--panel2);margin-bottom:8px;
+}
+.resrow.win{border-color:var(--gold);background:rgba(200,160,96,.09)}
+.resfill{position:absolute;inset:0 auto 0 0;background:rgba(107,142,90,.16);z-index:0}
+.resrow.win .resfill{background:rgba(200,160,96,.16)}
+.resrow>*{position:relative;z-index:1}
+.resrank{font-size:19px;line-height:1.2;min-width:26px;text-align:center}
+.resmain{flex:1;min-width:0}
+.resday{font-size:14.5px;font-weight:750;color:var(--chalk)}
+.reswho{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.55}
+.resnum{text-align:right;min-width:66px}
+.resnum b{display:block;font-size:17px;font-weight:800;color:var(--chalk)}
+.resnum span{font-size:11px;color:var(--muted)}
 .vopt{
   position:relative;overflow:hidden;text-align:left;padding:14px 15px;border-radius:var(--r-sm);
   border:1.5px solid var(--line2);background:var(--panel2);transition:.16s;width:100%;
@@ -604,50 +628,13 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
   <!-- ============================================================= POLL -->
   <section class="view" id="v-poll">
     <h2 class="sec">Draft date poll</h2>
-    <p class="lede">Tap every day that works for you and hit submit — that's it. The winning day is the one the most people can actually make.</p>
+    <p class="lede" id="pollLede">Pick your team, tap every day that works for you, and hit save — that's it. The winning day is the one the most teams can actually make.</p>
     <div class="spacer"></div>
 
     <div id="pollSetup">
       <div class="card">
-        <h3>Start the draft-date poll</h3>
-        <div class="setup">
-          <div>
-            <label class="fld" for="newLeagueName">Your team name</label>
-            <input type="text" id="newLeagueName" placeholder="e.g. Gronk Obama" maxlength="44">
-            <div class="hint" style="margin-top:6px">This creates your team in the league. Everyone else adds theirs from the same link.</div>
-            <div class="spacer"></div>
-            <label class="fld" for="dateAdd">Add draft dates</label>
-            <div class="datepick">
-              <input type="date" id="dateAdd" class="grow">
-              <input type="time" id="timeAdd" style="max-width:130px" title="Optional time">
-              <button class="btn" id="btnAddDate">Add</button>
-            </div>
-            <div class="hint" style="margin-top:6px">Time is optional — leave it blank for a whole day.</div>
-            <div class="hint" style="margin-top:8px">Or add a batch:
-              <button class="btn sm" id="btnWeekends" style="margin-left:4px">Next 6 weekends</button>
-            </div>
-            <div class="chips" id="newDateChips"></div>
-          </div>
-          <div>
-            <label class="fld">How it works</label>
-            <div class="hint" style="line-height:1.75">
-              1. Put in your team name.<br>
-              2. Add the draft dates you'd consider.<br>
-              3. Create the poll — you get a shareable link.<br>
-              4. Send that link to the league.<br>
-              5. Everyone adds their team and taps the days they're free.<br>
-              6. The date with the highest percentage wins.
-            </div>
-            <div class="spacer"></div>
-            <button class="btn pri" id="btnCreate" style="width:100%;min-height:48px">🗓️ Create poll &amp; get link</button>
-            <div class="spacer"></div>
-            <label class="fld" for="joinId">Already have a poll ID?</label>
-            <div class="datepick">
-              <input type="text" id="joinId" class="grow" placeholder="paste poll ID" maxlength="40">
-              <button class="btn" id="btnJoin">Join</button>
-            </div>
-          </div>
-        </div>
+        <h3>Connecting to the league…</h3>
+        <div class="hint" style="margin-top:8px">Loading every day from Aug 5 to kickoff. This takes a second.</div>
         <div id="setupMsg"></div>
       </div>
     </div>
@@ -663,7 +650,7 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
         </div>
 
         <div class="sharebar">
-          <span style="font-size:12px;color:var(--muted);font-weight:700">SHARE</span>
+          <span style="font-size:12px;color:var(--muted);font-weight:700">ONE LINK FOR THE LEAGUE</span>
           <code id="shareUrl"></code>
           <button class="btn sm pri" id="btnCopy">Copy link</button>
         </div>
@@ -672,26 +659,26 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
 
         <div class="spacer"></div>
         <label class="fld" for="voterTeamSel">Your team</label>
-        <select id="voterTeamSel" style="display:none;margin-bottom:8px"></select>
-        <input type="text" id="voterName" placeholder="e.g. Gronk Obama" maxlength="44">
-
-        <div id="pollPeopleWrap" style="display:none">
-          <div class="spacer"></div>
-          <label class="fld">Who's on this team?</label>
-          <div class="row" style="gap:7px">
-            <input type="text" id="pName" class="grow" placeholder="Add a person…" maxlength="40" style="min-width:130px">
-            <select id="pRole" style="max-width:165px"></select>
-            <button class="btn" id="btnAddPerson">➕ Add</button>
-          </div>
-          <div class="chips" id="pollPeople"></div>
-        </div>
+        <select id="voterTeamSel"></select>
+        <div id="noTeamsHint"></div>
 
         <div class="spacer"></div>
-        <button class="btn pri" id="btnSubmitVote" style="width:100%;min-height:52px;font-size:15px">✅ Submit my team &amp; dates</button>
-        <div class="hint" style="margin-top:7px">Tap every day that works below, then submit. Your team and everyone on it get saved to the league automatically.</div>
+        <button class="btn pri" id="btnSubmitVote" style="width:100%;min-height:52px;font-size:15px">✅ Save my dates</button>
+        <div id="myVoteState"></div>
+        <div class="hint" style="margin-top:7px">Pick your team, tap every day that works below, then save. You can change or withdraw it any time.</div>
 
         <div class="votegrid" id="voteGrid"></div>
         <div class="tally" id="tally"></div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="margin-bottom:10px">
+          <div class="grow">
+            <h3 style="margin-bottom:3px">📊 Where the league stands</h3>
+            <div class="hint">Every day anyone picked, best first, with the teams behind it.</div>
+          </div>
+        </div>
+        <div id="pollResults"></div>
       </div>
 
       <div class="card">
@@ -717,6 +704,13 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
             <select id="lockSel"><option value="">— not locked —</option></select>
           </div>
           <button class="btn gold" id="btnLock">🔒 Lock it in</button>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="row" style="border-top:1px solid var(--line);padding-top:12px">
+          <span class="hint grow">Finished a test run? Clear it out before the league joins.</span>
+          <button class="btn sm" id="btnResetVotes">🔄 Reset votes</button>
+          <button class="btn sm" id="btnResetAll">🧹 Clear everything</button>
         </div>
       </div>
 
@@ -857,6 +851,15 @@ const TEAM_NAMES = {
 /* Week 1 Sunday is Sep 13, 2026; every later week is +7 days.
    Week 18 Sunday lands on Jan 10, 2027 — the confirmed regular-season finale. */
 const WEEK1_SUNDAY = '2026-09-13';
+
+/* The realistic draft window: everything from early August up to the first
+   game. The server puts every one of these days on the board when the hub is
+   first opened, so there is nothing to set up. */
+const DRAFT_WINDOW_START = '2026-08-05';
+const DRAFT_WINDOW_END   = '2026-09-09';   // kickoff — Seahawks host Patriots
+
+/* The league has one hub and one link. Must match HUB_ID in api/league.js. */
+const HUB_ID = 'league';
 
 const KEY_DATES = [
   { d:'2026-09-09', t:'Season kickoff — Seahawks host Patriots', n:'Wed · NBC' },
@@ -1581,7 +1584,6 @@ const S = {
   me: { name: '', teamId: null },   // identity, shared across every tab
   picks: new Set(),
   meta: null,
-  pendingDates: [],
   pos: 'ALL',
   mode: 'list',
   q: '',
@@ -1597,7 +1599,6 @@ const S = {
   loadingWeek: false,
   club: 'chat',
   newTeamEmoji: '🏈',
-  pollPeople: [],          // people being entered alongside a poll vote
   newTeamName: '',         // in-progress team on the Teams tab
   newTeamPeople: [],
   powerDraft: null,   // working copy while reordering power rankings
@@ -1684,6 +1685,12 @@ function localId() {
   return id;
 }
 
+/* The poll is one vote per team, not one per phone. Keying the vote by the
+   team means any of its people can cast, change, or withdraw it, and a
+   three-person team does not get three times the say of a solo manager. */
+function voteKeyFor(teamId) { return teamId ? 'team:' + teamId : null; }
+function myVoteKey() { return voteKeyFor(S.me.teamId); }
+
 async function api(method, payload) {
   const opts = { method, headers: { 'Content-Type':'application/json' } };
   let url = API;
@@ -1708,14 +1715,18 @@ function show(v) {
   if (v === 'guide') renderGuide();
   if (v === 'teams') renderTeams();
   if (v === 'club') renderClub();
-  if (v === 'poll') renderLottery();
+  // Teams added on another tab have to show up in the poll's team picker.
+  if (v === 'poll') { renderPoll(); renderLottery(); }
   window.scrollTo({ top: 0, behavior: 'smooth' });
   history.replaceState(null, '', updateHash(v));
 }
 
+/* Everyone shares one hub, so the URL stays clean — no ?league= to pass
+   around. An old link that still carries one is honoured on load and then
+   tidied away here. */
 function updateHash(v) {
   const p = new URLSearchParams(location.search);
-  if (S.leagueId) p.set('league', S.leagueId); else p.delete('league');
+  p.delete('league');
   const q = p.toString();
   return location.pathname + (q ? '?' + q : '') + (v && v !== 'home' ? '#' + v : '');
 }
@@ -1814,87 +1825,7 @@ setInterval(renderCountdown, 1000);
    POLL
    ================================================================== */
 
-function renderPendingChips() {
-  const el = $('#newDateChips');
-  if (!S.pendingDates.length) {
-    el.innerHTML = '<span class="hint">No draft dates yet — add at least two.</span>';
-    return;
-  }
-  el.innerHTML = S.pendingDates.sort().map((d) => `
-    <span class="chip">${esc(fmtDate(d))}${timeOf(d) ? ' · ' + esc(timeOf(d)) : ''}
-      <button data-rm="${esc(d)}" aria-label="Remove">×</button></span>`).join('');
-}
-
-$('#newDateChips').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-rm]');
-  if (!b) return;
-  S.pendingDates = S.pendingDates.filter((d) => d !== b.dataset.rm);
-  renderPendingChips();
-});
-
 const withTime = (d, t) => (d && t ? d + 'T' + t : d);
-
-$('#btnAddDate').addEventListener('click', () => {
-  const v = withTime($('#dateAdd').value, $('#timeAdd').value);
-  if (!$('#dateAdd').value) return toast('Pick a day first', true);
-  if (S.pendingDates.includes(v)) return toast('Already added', true);
-  S.pendingDates.push(v);
-  $('#dateAdd').value = ''; $('#timeAdd').value = '';
-  renderPendingChips();
-});
-
-$('#btnWeekends').addEventListener('click', () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  let added = 0;
-  while (added < 6) {
-    d.setDate(d.getDate() + 1);
-    if (d.getDay() === 6 || d.getDay() === 0) {
-      const iso = d.toISOString().slice(0, 10);
-      if (!S.pendingDates.includes(iso)) { S.pendingDates.push(iso); added++; }
-    }
-  }
-  renderPendingChips();
-  toast('Added the next 6 weekend days');
-});
-
-$('#btnCreate').addEventListener('click', async () => {
-  if (S.pendingDates.length < 2) return toast('Add at least two draft dates', true);
-  const btn = $('#btnCreate');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Creating…';
-  try {
-    const teamName = $('#newLeagueName').value.trim();
-    const res = await api('POST', {
-      action: 'create',
-      name: 'Fantasy Football 2027',
-      dates: S.pendingDates
-    });
-    S.meta = res.meta;
-
-    // The name entered here is the creator's team, not the league's title.
-    let league = res.league;
-    if (teamName) {
-      const r2 = await api('POST', { action:'addTeam', id: league.id,
-        name: teamName, emoji: S.newTeamEmoji, managers: [] });
-      league = r2.league;
-      const mine = league.teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
-      if (mine) { S.me.teamId = mine.id; saveMe(); }
-    }
-    adoptLeague(league);
-    toast(teamName ? `${teamName} added — share the link!` : 'Poll created — share the link!');
-  } catch (err) {
-    $('#setupMsg').innerHTML =
-      `<div class="spacer"></div><div class="banner err">⚠️ Could not create the poll: ${esc(err.message)}.
-       If you are opening this file directly from disk, the API is not running — deploy to Vercel first.</div>`;
-  } finally {
-    btn.disabled = false; btn.textContent = 'Create poll & get link';
-  }
-});
-
-$('#btnJoin').addEventListener('click', () => {
-  const id = $('#joinId').value.trim();
-  if (id) loadLeague(id);
-});
 
 function adoptLeague(league) {
   S.league = league;
@@ -1921,7 +1852,10 @@ async function loadLeague(id, quiet) {
     if (!quiet) toast('Loaded ' + res.league.name);
     return true;
   } catch (err) {
-    if (!quiet) toast('Could not load that poll: ' + err.message, true);
+    $('#setupMsg').innerHTML =
+      `<div class="spacer"></div><div class="banner err">⚠️ Could not reach the league: ${esc(err.message)}.
+       <div style="margin-top:8px"><button class="btn sm" id="btnRetryLoad">↻ Try again</button></div></div>`;
+    if (!quiet) toast('Could not load the league: ' + err.message, true);
     return false;
   }
 }
@@ -1931,7 +1865,6 @@ function renderPoll() {
   if (!L) {
     $('#pollSetup').style.display = '';
     $('#pollLive').style.display = 'none';
-    renderPendingChips();
     return;
   }
 
@@ -1940,45 +1873,41 @@ function renderPoll() {
   $('#leagueName').textContent = L.name;
   $('#pollTitle').textContent = L.name;
 
-  const voters = Object.values(L.votes || {});
+  // Collapse to one entry per team, keeping the newest, so a team that voted
+  // from two phones still counts once and is listed once.
+  const byTeam = new Map();
+  Object.entries(L.votes || {}).forEach(([k, v]) => {
+    const key = v.teamId || k;
+    const prev = byTeam.get(key);
+    if (!prev || (v.ts || 0) >= (prev.ts || 0)) byTeam.set(key, v);
+  });
+  const voters = [...byTeam.values()];
   const total = voters.length;
   $('#pollStatus').innerHTML =
     (total === 0 ? 'No votes yet — be the first.'
-      : total + (total === 1 ? ' person has' : ' people have') + ' voted.')
+      : total + (total === 1 ? ' team has' : ' teams have') + ' voted.')
     + ' <span class="livedot" title="Updates automatically as people vote">● live</span>';
 
-  const url = location.origin + location.pathname + '?league=' + L.id;
-  $('#shareUrl').textContent = url;
+  // One link for the whole league — the plain site address.
+  $('#shareUrl').textContent = location.origin + location.pathname;
 
-  // Restore this device's previous answer: team name, its people, and picks.
-  const mine = L.votes && L.votes[S.voterId];
+  // Restore my team's previous answer so the picks show as already marked.
+  const mine = L.votes && myVoteKey() && L.votes[myVoteKey()];
   const myTeamRec = myTeam();
-  if (!$('#voterName').value) {
-    $('#voterName').value = (mine && mine.name) || (myTeamRec && myTeamRec.name) || '';
-  }
-  if (!S.pollPeople.length && myTeamRec) {
-    S.pollPeople = myTeamRec.managers.map((m) => ({ name: mgrName(m), role: mgrRole(m) }));
-  }
   if (mine && S.picks.size === 0) mine.picks.forEach((p) => S.picks.add(p));
 
-  // Once teams exist, offer them so nobody re-types a name and creates a twin.
+  // Voting is by team: pick one that already exists. Teams are created on the
+  // Teams tab, which keeps this screen to a single decision.
   const teamSel = $('#voterTeamSel');
-  const typed = $('#voterName').value.trim().toLowerCase();
-  const match = L.teams.find((t) => t.name.toLowerCase() === typed);
-  if (L.teams.length) {
-    teamSel.style.display = '';
-    teamSel.innerHTML =
-      '<option value="">— pick your team —</option>' +
-      L.teams.map((t) => `<option value="${esc(t.id)}" ${match && match.id === t.id ? 'selected' : ''}>${esc(t.emoji)} ${esc(t.name)} (${t.managers.length})</option>`).join('') +
-      '<option value="__new">➕ Add a new team</option>';
-    // Hide the free-text box while an existing team is selected.
-    $('#voterName').style.display = match ? 'none' : '';
-  } else {
-    teamSel.style.display = 'none';
-    $('#voterName').style.display = '';
-  }
+  const picked = S.me.teamId && L.teams.some((t) => t.id === S.me.teamId) ? S.me.teamId : '';
+  teamSel.innerHTML =
+    '<option value="">— pick your team —</option>' +
+    L.teams.map((t) => `<option value="${esc(t.id)}" ${t.id === picked ? 'selected' : ''}>${esc(t.emoji)} ${esc(t.name)}${t.managers.length ? ' · ' + t.managers.map((m) => esc(mgrName(m))).join(', ') : ''}</option>`).join('');
 
-  syncPollPeopleUI();
+  $('#noTeamsHint').innerHTML = L.teams.length
+    ? `<div class="hint" style="margin-top:6px">Not listed? <b data-goto="teams" style="color:var(--grass-lt);cursor:pointer">Add your team →</b></div>`
+    : `<div class="spacer"></div><div class="banner warn">🏆 <div><b>No teams yet.</b>
+        <div style="margin-top:7px"><button class="btn sm" data-goto="teams">🏆 Add your team first</button></div></div></div>`;
 
   $('#lockedBanner').innerHTML = L.locked
     ? `<div class="spacer"></div><div class="banner ok">🏆 <div><b>Draft locked in: ${esc(fmtLong(L.locked))}</b>
@@ -2002,6 +1931,18 @@ function renderPoll() {
   });
   const best = Math.max(0, ...L.dates.map((d) => counts[d].length));
 
+  // Show what my team has already submitted, with a way out of it.
+  const submitted = L.votes && myVoteKey() && L.votes[myVoteKey()];
+  $('#myVoteState').innerHTML = submitted
+    ? `<div class="spacer"></div><div class="banner ok">✅ <div>
+         <b>Submitted as ${esc(submitted.name)}</b> — ${submitted.picks.length} day${submitted.picks.length === 1 ? '' : 's'} marked.
+         <div style="margin-top:8px;display:flex;gap:7px;flex-wrap:wrap">
+           <button class="btn sm" id="btnChangeVote">✏️ Change my days</button>
+           <button class="btn sm" id="btnWithdrawVote">🗑️ Withdraw my vote</button>
+         </div></div></div>`
+    : '';
+
+  $('#voteGrid').classList.toggle('compact', L.dates.length > 12);
   $('#voteGrid').innerHTML = L.dates.length === 0
     ? '<div class="empty"><div class="ico">📅</div>No draft dates yet — add one below.</div>'
     : L.dates.map((d) => {
@@ -2025,9 +1966,11 @@ function renderPoll() {
 
   const winner = L.dates.filter((d) => counts[d].length === best && best > 0);
   $('#tally').innerHTML = `
-    <div><b>${total}</b> voted</div>
+    <div><b>${total}</b> team${total === 1 ? '' : 's'} voted</div>
     <div><b>${L.dates.length}</b> draft dates on the table</div>
     ${best > 0 ? `<div>Leader: <b>${esc(winner.map((w) => fmtDate(w)).join(' / '))}</b> — <b>${Math.round((best/total)*100)}%</b> available</div>` : ''}`;
+
+  renderResults(L, counts, total, best);
 
   const sel = $('#lockSel');
   sel.innerHTML = '<option value="">— not locked —</option>' +
@@ -2037,68 +1980,62 @@ function renderPoll() {
   renderMe();
 }
 
-/** Show the people section as soon as a team name is typed. */
-function syncPollPeopleUI() {
-  const has = !!$('#voterName').value.trim();
-  $('#pollPeopleWrap').style.display = has ? '' : 'none';
-  if ($('#pRole') && !$('#pRole').options.length) {
-    $('#pRole').innerHTML = ROLES.map((r) =>
-      `<option ${r === 'Manager' ? 'selected' : ''}>${esc(r)}</option>`).join('');
+/**
+ * The standings board: every day someone picked, best first, naming the teams
+ * behind each one — plus who still owes a vote.
+ *
+ * The tiles above are a picker and go compact at 36 days, which hides their
+ * per-tile name line. This is where the league actually reads the answer.
+ */
+function renderResults(L, counts, total, best) {
+  const picked = L.dates
+    .filter((d) => counts[d].length > 0)
+    .sort((a, b) => counts[b].length - counts[a].length || (a < b ? -1 : 1));
+
+  const votedTeams = new Set(Object.values(L.votes || {}).map((v) => v.teamId).filter(Boolean));
+  const waiting = L.teams.filter((t) => !votedTeams.has(t.id));
+
+  const missing = !L.teams.length
+    ? `<div class="hint" style="margin-top:10px">Add the league's teams on the Teams tab and they'll show up here.</div>`
+    : waiting.length
+      ? `<div class="hint" style="margin-top:10px">Still to vote: <b>${waiting.map((t) => esc(t.emoji + ' ' + t.name)).join(', ')}</b></div>`
+      : `<div class="hint" style="margin-top:10px">✅ Every team has voted.</div>`;
+
+  if (!picked.length) {
+    $('#pollResults').innerHTML =
+      `<div class="empty"><div class="ico">🗳️</div>No votes yet — pick your days above and you'll be first on the board.</div>`
+      + missing;
+    return;
   }
-  $('#pollPeople').innerHTML = S.pollPeople.length
-    ? S.pollPeople.map((m, i) => `<span class="chip"><b>${esc(m.name)}</b>
-        <span style="color:var(--grass-lt);font-size:11px">${esc(m.role)}</span>
-        <button data-rmp="${i}" aria-label="Remove ${esc(m.name)}">×</button></span>`).join('')
-    : '<span class="hint">Add everyone who manages this team — one person or several.</span>';
+
+  $('#pollResults').innerHTML = picked.map((d, i) => {
+    const c = counts[d].length;
+    const pct = total ? Math.round((c / total) * 100) : 0;
+    const isBest = c === best;
+    return `
+      <div class="resrow ${isBest ? 'win' : ''}">
+        <div class="resfill" style="width:${pct}%"></div>
+        <div class="resrank">${isBest ? '👑' : i + 1}</div>
+        <div class="resmain">
+          <div class="resday">${esc(fmtDate(d, { weekday:'short', month:'short', day:'numeric' }))}${
+            timeOf(d) ? ` <span style="color:var(--gold)">${esc(timeOf(d))}</span>` : ''}</div>
+          <div class="reswho">${esc(counts[d].join(', '))}</div>
+        </div>
+        <div class="resnum"><b>${pct}%</b><span>${c} of ${total}</span></div>
+      </div>`;
+  }).join('') + missing;
 }
 
-$('#voterName').addEventListener('input', syncPollPeopleUI);
-
 $('#voterTeamSel').addEventListener('change', (e) => {
-  const v = e.target.value;
-  if (v === '__new') {
-    $('#voterName').value = '';
-    $('#voterName').style.display = '';
-    S.pollPeople = [];
-    $('#voterName').focus();
-  } else if (v) {
-    const t = teamById(v);
-    if (t) {
-      $('#voterName').value = t.name;
-      $('#voterName').style.display = 'none';
-      // Pull in who is already on it so you can check yourself off, or add.
-      S.pollPeople = t.managers.map((m) => ({ name: mgrName(m), role: mgrRole(m) }));
-      S.me.teamId = t.id;
-      saveMe();
-    }
-  } else {
-    $('#voterName').value = '';
-    $('#voterName').style.display = '';
-    S.pollPeople = [];
-  }
-  syncPollPeopleUI();
-});
-
-$('#btnAddPerson').addEventListener('click', () => {
-  const name = $('#pName').value.trim();
-  if (!name) return toast('Type a name first', true);
-  if (S.pollPeople.some((m) => m.name.toLowerCase() === name.toLowerCase())) {
-    return toast(name + ' is already on the list', true);
-  }
-  S.pollPeople.push({ name, role: $('#pRole').value || 'Manager' });
-  $('#pName').value = '';
-  syncPollPeopleUI();
-});
-
-$('#pName').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); $('#btnAddPerson').click(); }
-});
-
-$('#pollPeople').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-rmp]');
-  if (!b) return;
-  S.pollPeople.splice(+b.getAttribute('data-rmp'), 1);
-  syncPollPeopleUI();
+  S.me.teamId = e.target.value || null;
+  saveMe();
+  renderMe();
+  // Show whatever this team already submitted, so you adjust rather than
+  // start over — and so picking the wrong team is obvious straight away.
+  const key = myVoteKey();
+  const prev = key && S.league && S.league.votes && S.league.votes[key];
+  S.picks = new Set(prev ? prev.picks : []);
+  renderPoll();
 });
 
 $('#voteGrid').addEventListener('click', (e) => {
@@ -2110,52 +2047,39 @@ $('#voteGrid').addEventListener('click', (e) => {
 });
 
 $('#btnSubmitVote').addEventListener('click', async () => {
-  const teamName = $('#voterName').value.trim();
-  if (!teamName) return toast('Add your team name first', true);
+  const teamId = $('#voterTeamSel').value;
+  const team = teamId && teamById(teamId);
+  if (!team) return toast('Pick your team first', true);
   if (!S.picks.size) return toast('Tap at least one day', true);
 
   const btn = $('#btnSubmitVote');
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Saving…';
   try {
-    // Create the team on first submit, or top it up with anyone new.
-    let team = S.league.teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
-    if (!team) {
-      const res = await api('POST', { action:'addTeam', id:S.leagueId, name:teamName,
-        emoji:S.newTeamEmoji, managers:S.pollPeople });
-      S.league = res.league;
-      team = S.league.teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
-    } else {
-      for (const person of S.pollPeople) {
-        if (!onRoster(team, person.name)) {
-          const res = await api('POST', { action:'joinTeam', id:S.leagueId, teamId:team.id,
-            manager:person.name, role:person.role });
-          S.league = res.league;
-        }
-      }
-      team = S.league.teams.find((t) => t.id === team.id);
-    }
-
     const res = await api('POST', {
-      action: 'vote', id: S.leagueId, voter: S.voterId,
-      name: teamName, teamId: team ? team.id : null, picks: Array.from(S.picks)
+      action: 'vote', id: S.leagueId, voter: voteKeyFor(team.id),
+      name: team.name, teamId: team.id, picks: Array.from(S.picks)
     });
-
-    // Remember this device as that team so the rest of the hub knows you.
-    S.me.name = S.pollPeople[0] ? S.pollPeople[0].name : teamName;
-    S.me.teamId = team ? team.id : null;
+    S.me.teamId = team.id;
+    if (!S.me.name && team.managers.length) S.me.name = mgrName(team.managers[0]);
     saveMe();
-
     S.league = res.league;
     renderPoll();
-    toast('Team and dates saved 🏈');
+    toast(team.name + ' — dates saved 🏈');
   } catch (err) {
     toast('Could not save: ' + err.message, true);
   } finally {
-    btn.disabled = false; btn.innerHTML = '✅ Submit my team &amp; dates';
+    btn.disabled = false; btn.innerHTML = '✅ Save my dates';
   }
 });
 
-$('#btnRefresh').addEventListener('click', () => S.leagueId && loadLeague(S.leagueId));
+$('#btnRefresh').addEventListener('click', () => loadLeague(S.leagueId || HUB_ID));
+
+/** Offered when the very first load could not reach the API. */
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#btnRetryLoad')) return;
+  $('#setupMsg').innerHTML = '';
+  loadLeague(HUB_ID);
+});
 
 $('#btnCopy').addEventListener('click', async () => {
   const url = $('#shareUrl').textContent;
@@ -2179,6 +2103,36 @@ $('#btnMoreDate').addEventListener('click', async () => {
     const res = await api('POST', { action:'addDates', id:S.leagueId, dates:[v] });
     S.league = res.league; $('#moreDate').value = ''; $('#moreTime').value = ''; renderPoll(); toast('Day added');
   } catch (err) { toast('Could not add: ' + err.message, true); }
+});
+
+/** Withdraw my team's vote — for picking the wrong days or the wrong team. */
+document.addEventListener('click', async (e) => {
+  if (e.target.closest('#btnWithdrawVote')) {
+    if (!confirm('Withdraw your vote? Your team comes off every day you picked, and you can vote again.')) return;
+    S.picks.clear();
+    if (await act({ action:'unvote', voter: myVoteKey(), teamId: S.me.teamId }, 'Vote withdrawn — pick again when ready')) renderPoll();
+    return;
+  }
+  if (e.target.closest('#btnChangeVote')) {
+    // Keep the picks loaded so they can adjust rather than start over.
+    document.querySelector('#voteGrid').scrollIntoView({ behavior:'smooth', block:'center' });
+    toast('Tap days to add or remove, then save again');
+  }
+});
+
+$('#btnResetVotes').addEventListener('click', async () => {
+  if (!confirm('Clear every vote? Teams and dates stay, and everyone starts again.')) return;
+  S.picks.clear();
+  if (await act({ action:'resetVotes' }, 'Votes cleared — the poll is open again')) renderPoll();
+});
+
+$('#btnResetAll').addEventListener('click', async () => {
+  if (!confirm('Clear ALL test data — every vote, team, message, award, ranking and the drawn order? Only the draft dates survive.')) return;
+  S.picks.clear();
+  S.me.teamId = null; saveMe();
+  if (await act({ action:'resetAll' }, 'Cleared — ready for the real thing')) {
+    renderPoll(); renderTeams(); renderClub();
+  }
 });
 
 $('#btnLock').addEventListener('click', async () => {
@@ -3209,7 +3163,7 @@ function renderChat(el) {
     <div class="card">
       <div class="row" style="margin-bottom:10px">
         <span class="pill g">${t ? esc(t.emoji) + ' ' + esc(t.name) : '👤 no team set'}</span>
-        <span class="hint">posting as <b>${esc(S.me.name || 'anonymous')}</b></span>
+        <span class="hint">posting as <b>${esc(S.me.name || (t && t.name) || 'nobody yet')}</b></span>
         <div class="grow"></div>
         <button class="btn sm" data-goto="teams">✏️ Change</button>
       </div>
@@ -3374,8 +3328,11 @@ $('#clubBody').addEventListener('click', async (e) => {
   if (e.target.closest('#btnPost')) {
     const text = $('#msgText').value.trim();
     if (!text) return toast('Type something first', true);
-    if (!S.me.name) return toast('Set your name on the Teams tab first', true);
-    if (await act({ action:'post', name:S.me.name, teamId:S.me.teamId, text }, 'Posted 💬')) renderClub();
+    // Fall back to the team name so a team with no people listed can still post.
+    const t = myTeam();
+    const who = S.me.name || (t && t.name) || '';
+    if (!who) return toast('Pick your team on the Draft Day tab first', true);
+    if (await act({ action:'post', name:who, teamId:S.me.teamId, text }, 'Posted 💬')) renderClub();
     return;
   }
   if (e.target.closest('#btnReloadChat')) {
@@ -3444,6 +3401,9 @@ function syncPowerNotes() {
 
   $('#tzLabel').textContent =
     Intl.DateTimeFormat().resolvedOptions().timeZone || 'your local timezone';
+  $('#pollLede').textContent =
+    `Every day from ${fmtDate(DRAFT_WINDOW_START)} to kickoff on ${fmtDate(DRAFT_WINDOW_END)} is already on the board. `
+    + 'Pick your team, tap the days that work, and hit save — the winning day is the one the most teams can make.';
   $('#tileGuideSub').textContent =
     PLAYERS.length + ' players ranked for standard scoring with pros, cons, and target rounds.';
 
@@ -3457,24 +3417,21 @@ function syncPowerNotes() {
   renderHome();
   renderMe();
   fillFilters();
-  renderPendingChips();
   loadCache();
 
-  // Deep link: ?league=<id> is the shareable URL everyone opens.
+  // One league, one link: opening the site drops you straight into it, with
+  // every day from Aug 5 to kickoff already on the board. An older ?league=
+  // link still works so nothing anyone has already shared breaks.
   const params = new URLSearchParams(location.search);
-  const id = params.get('league') || localStorage.getItem('ffhub_league');
-  if (id) await loadLeague(id, true);
+  await loadLeague(params.get('league') || HUB_ID, true);
   if (!S.league) renderPoll();
 
   // A team that was deleted elsewhere shouldn't leave a dangling identity.
   if (S.me.teamId && S.league && !myTeam()) { S.me.teamId = null; saveMe(); }
   renderMe();
 
-  // Opening the shared link goes straight to the poll — voting should need no
-  // setup at all. Teams are a separate, optional thing.
   const hash = location.hash.replace('#', '');
   if (['teams','poll','guide','sched','club'].includes(hash)) show(hash);
-  else if (params.get('league') && S.league) show('poll');
 
   fetchWeek(1);
 })();
