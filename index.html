@@ -669,12 +669,24 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
         <div id="lockedBanner"></div>
 
         <div class="spacer"></div>
-        <label class="fld" for="voterName">Your name</label>
-        <div class="datepick">
-          <input type="text" id="voterName" class="grow" placeholder="Who are you?" maxlength="40">
-          <button class="btn pri" id="btnSubmitVote">Submit my dates</button>
+        <label class="fld" for="voterTeamSel">Your team</label>
+        <select id="voterTeamSel" style="display:none;margin-bottom:8px"></select>
+        <input type="text" id="voterName" placeholder="e.g. Gronk Obama" maxlength="44">
+
+        <div id="pollPeopleWrap" style="display:none">
+          <div class="spacer"></div>
+          <label class="fld">Who's on this team?</label>
+          <div class="row" style="gap:7px">
+            <input type="text" id="pName" class="grow" placeholder="Add a person…" maxlength="40" style="min-width:130px">
+            <select id="pRole" style="max-width:165px"></select>
+            <button class="btn" id="btnAddPerson">➕ Add</button>
+          </div>
+          <div class="chips" id="pollPeople"></div>
         </div>
-        <div class="hint" style="margin-top:7px">Tap every day that works for you, then submit. You can change your answer any time — no sign-up, no team needed.</div>
+
+        <div class="spacer"></div>
+        <button class="btn pri" id="btnSubmitVote" style="width:100%;min-height:52px;font-size:15px">✅ Submit my team &amp; dates</button>
+        <div class="hint" style="margin-top:7px">Tap every day that works below, then submit. Your team and everyone on it get saved to the league automatically.</div>
 
         <div class="votegrid" id="voteGrid"></div>
         <div class="tally" id="tally"></div>
@@ -1583,6 +1595,9 @@ const S = {
   loadingWeek: false,
   club: 'chat',
   newTeamEmoji: '🏈',
+  pollPeople: [],          // people being entered alongside a poll vote
+  newTeamName: '',         // in-progress team on the Teams tab
+  newTeamPeople: [],
   powerDraft: null,   // working copy while reordering power rankings
   revealed: -1        // how many lottery picks are currently shown (-1 = all)
 };
@@ -1922,10 +1937,35 @@ function renderPoll() {
   const url = location.origin + location.pathname + '?league=' + L.id;
   $('#shareUrl').textContent = url;
 
-  // Restore this device's previous answer, falling back to the saved identity.
+  // Restore this device's previous answer: team name, its people, and picks.
   const mine = L.votes && L.votes[S.voterId];
-  if (!$('#voterName').value) $('#voterName').value = (mine && mine.name) || S.me.name || '';
+  const myTeamRec = myTeam();
+  if (!$('#voterName').value) {
+    $('#voterName').value = (mine && mine.name) || (myTeamRec && myTeamRec.name) || '';
+  }
+  if (!S.pollPeople.length && myTeamRec) {
+    S.pollPeople = myTeamRec.managers.map((m) => ({ name: mgrName(m), role: mgrRole(m) }));
+  }
   if (mine && S.picks.size === 0) mine.picks.forEach((p) => S.picks.add(p));
+
+  // Once teams exist, offer them so nobody re-types a name and creates a twin.
+  const teamSel = $('#voterTeamSel');
+  const typed = $('#voterName').value.trim().toLowerCase();
+  const match = L.teams.find((t) => t.name.toLowerCase() === typed);
+  if (L.teams.length) {
+    teamSel.style.display = '';
+    teamSel.innerHTML =
+      '<option value="">— pick your team —</option>' +
+      L.teams.map((t) => `<option value="${esc(t.id)}" ${match && match.id === t.id ? 'selected' : ''}>${esc(t.emoji)} ${esc(t.name)} (${t.managers.length})</option>`).join('') +
+      '<option value="__new">➕ Add a new team</option>';
+    // Hide the free-text box while an existing team is selected.
+    $('#voterName').style.display = match ? 'none' : '';
+  } else {
+    teamSel.style.display = 'none';
+    $('#voterName').style.display = '';
+  }
+
+  syncPollPeopleUI();
 
   $('#lockedBanner').innerHTML = L.locked
     ? `<div class="spacer"></div><div class="banner ok">🏆 <div><b>Draft locked in: ${esc(fmtLong(L.locked))}</b>
@@ -1984,6 +2024,70 @@ function renderPoll() {
   renderMe();
 }
 
+/** Show the people section as soon as a team name is typed. */
+function syncPollPeopleUI() {
+  const has = !!$('#voterName').value.trim();
+  $('#pollPeopleWrap').style.display = has ? '' : 'none';
+  if ($('#pRole') && !$('#pRole').options.length) {
+    $('#pRole').innerHTML = ROLES.map((r) =>
+      `<option ${r === 'Manager' ? 'selected' : ''}>${esc(r)}</option>`).join('');
+  }
+  $('#pollPeople').innerHTML = S.pollPeople.length
+    ? S.pollPeople.map((m, i) => `<span class="chip"><b>${esc(m.name)}</b>
+        <span style="color:var(--grass-lt);font-size:11px">${esc(m.role)}</span>
+        <button data-rmp="${i}" aria-label="Remove ${esc(m.name)}">×</button></span>`).join('')
+    : '<span class="hint">Add everyone who manages this team — one person or several.</span>';
+}
+
+$('#voterName').addEventListener('input', syncPollPeopleUI);
+
+$('#voterTeamSel').addEventListener('change', (e) => {
+  const v = e.target.value;
+  if (v === '__new') {
+    $('#voterName').value = '';
+    $('#voterName').style.display = '';
+    S.pollPeople = [];
+    $('#voterName').focus();
+  } else if (v) {
+    const t = teamById(v);
+    if (t) {
+      $('#voterName').value = t.name;
+      $('#voterName').style.display = 'none';
+      // Pull in who is already on it so you can check yourself off, or add.
+      S.pollPeople = t.managers.map((m) => ({ name: mgrName(m), role: mgrRole(m) }));
+      S.me.teamId = t.id;
+      saveMe();
+    }
+  } else {
+    $('#voterName').value = '';
+    $('#voterName').style.display = '';
+    S.pollPeople = [];
+  }
+  syncPollPeopleUI();
+});
+
+$('#btnAddPerson').addEventListener('click', () => {
+  const name = $('#pName').value.trim();
+  if (!name) return toast('Type a name first', true);
+  if (S.pollPeople.some((m) => m.name.toLowerCase() === name.toLowerCase())) {
+    return toast(name + ' is already on the list', true);
+  }
+  S.pollPeople.push({ name, role: $('#pRole').value || 'Manager' });
+  $('#pName').value = '';
+  syncPollPeopleUI();
+});
+
+$('#pName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); $('#btnAddPerson').click(); }
+});
+
+$('#pollPeople').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-rmp]');
+  if (!b) return;
+  S.pollPeople.splice(+b.getAttribute('data-rmp'), 1);
+  syncPollPeopleUI();
+});
+
 $('#voteGrid').addEventListener('click', (e) => {
   const b = e.target.closest('.vopt');
   if (!b) return;
@@ -1993,20 +2097,49 @@ $('#voteGrid').addEventListener('click', (e) => {
 });
 
 $('#btnSubmitVote').addEventListener('click', async () => {
-  const name = $('#voterName').value.trim();
-  if (!name) return toast('Add your name first', true);
-  if (!S.picks.size) return toast('Tap at least one date', true);
+  const teamName = $('#voterName').value.trim();
+  if (!teamName) return toast('Add your team name first', true);
+  if (!S.picks.size) return toast('Tap at least one day', true);
+
   const btn = $('#btnSubmitVote');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Saving…';
   try {
+    // Create the team on first submit, or top it up with anyone new.
+    let team = S.league.teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
+    if (!team) {
+      const res = await api('POST', { action:'addTeam', id:S.leagueId, name:teamName,
+        emoji:S.newTeamEmoji, managers:S.pollPeople });
+      S.league = res.league;
+      team = S.league.teams.find((t) => t.name.toLowerCase() === teamName.toLowerCase());
+    } else {
+      for (const person of S.pollPeople) {
+        if (!onRoster(team, person.name)) {
+          const res = await api('POST', { action:'joinTeam', id:S.leagueId, teamId:team.id,
+            manager:person.name, role:person.role });
+          S.league = res.league;
+        }
+      }
+      team = S.league.teams.find((t) => t.id === team.id);
+    }
+
     const res = await api('POST', {
       action: 'vote', id: S.leagueId, voter: S.voterId,
-      name, teamId: S.me.teamId, picks: Array.from(S.picks)
+      name: teamName, teamId: team ? team.id : null, picks: Array.from(S.picks)
     });
-    S.me.name = name; saveMe();
-    S.league = res.league; renderPoll(); toast('Your dates are in 🏈');
-  } catch (err) { toast('Vote failed: ' + err.message, true); }
-  finally { btn.disabled = false; btn.textContent = 'Submit my dates'; }
+
+    // Remember this device as that team so the rest of the hub knows you.
+    S.me.name = S.pollPeople[0] ? S.pollPeople[0].name : teamName;
+    S.me.teamId = team ? team.id : null;
+    saveMe();
+
+    S.league = res.league;
+    renderPoll();
+    toast('Team and dates saved 🏈');
+  } catch (err) {
+    toast('Could not save: ' + err.message, true);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '✅ Submit my team &amp; dates';
+  }
 });
 
 $('#btnRefresh').addEventListener('click', () => S.leagueId && loadLeague(S.leagueId));
@@ -2679,23 +2812,30 @@ function renderTeams() {
 
     <div class="card">
       <h3>➕ Add a team</h3>
-      <div class="row">
-        <div class="grow" style="min-width:190px">
-          <label class="fld" for="ntName">Team name</label>
-          <input type="text" id="ntName" maxlength="44" placeholder="e.g. Gronk Obama">
+      <label class="fld" for="ntName">Team name</label>
+      <input type="text" id="ntName" maxlength="44" placeholder="e.g. Gronk Obama">
+
+      <div id="ntPeopleWrap" style="display:${S.newTeamName ? '' : 'none'}">
+        <div class="spacer"></div>
+        <label class="fld">Who's on this team?</label>
+        <div class="row" style="gap:7px">
+          <input type="text" id="ntPersonName" class="grow" placeholder="Add a person…" maxlength="40" style="min-width:130px">
+          <select id="ntPersonRole" style="max-width:165px">
+            ${ROLES.map((r) => `<option ${r === 'Manager' ? 'selected' : ''}>${esc(r)}</option>`).join('')}
+          </select>
+          <button class="btn" id="btnNtAddPerson">➕ Add</button>
         </div>
-        <div class="grow" style="min-width:190px">
-          <label class="fld" for="ntMgrs">Manager(s) — separate with commas</label>
-          <input type="text" id="ntMgrs" maxlength="200" placeholder="e.g. Isaac, Marcus">
+        <div class="chips" id="ntPeople"></div>
+
+        <div class="spacer"></div>
+        <label class="fld">Pick a logo</label>
+        <div class="empick" id="emPick">
+          ${TEAM_EMOJI.map((e2) => `<button class="emopt ${e2 === S.newTeamEmoji ? 'on' : ''}" data-em="${esc(e2)}">${esc(e2)}</button>`).join('')}
         </div>
       </div>
+
       <div class="spacer"></div>
-      <label class="fld">Pick a logo</label>
-      <div class="empick" id="emPick">
-        ${TEAM_EMOJI.map((e2) => `<button class="emopt ${e2 === S.newTeamEmoji ? 'on' : ''}" data-em="${esc(e2)}">${esc(e2)}</button>`).join('')}
-      </div>
-      <div class="spacer"></div>
-      <button class="btn pri" id="btnAddTeam" style="min-height:48px">🏆 Add this team</button>
+      <button class="btn pri" id="btnAddTeam" style="width:100%;min-height:52px;font-size:15px">🏆 Add this team to the league</button>
     </div>
 
     <div class="card">
@@ -2709,6 +2849,24 @@ function renderTeams() {
       ${teams.length ? `<div class="teamgrid">${teams.map(teamCard).join('')}</div>`
         : '<div class="empty"><div class="ico">🏈</div>No teams yet. Add the first one above.</div>'}
     </div>`;
+
+  const nameEl = $('#ntName');
+  if (nameEl) nameEl.value = S.newTeamName;
+  syncNewTeamUI();
+}
+
+/** Staged people for the team being created on the Teams tab. */
+function syncNewTeamUI() {
+  const wrap = $('#ntPeopleWrap');
+  if (!wrap) return;
+  wrap.style.display = S.newTeamName ? '' : 'none';
+  const box = $('#ntPeople');
+  if (!box) return;
+  box.innerHTML = S.newTeamPeople.length
+    ? S.newTeamPeople.map((m, i) => `<span class="chip"><b>${esc(m.name)}</b>
+        <span style="color:var(--grass-lt);font-size:11px">${esc(m.role)}</span>
+        <button data-rmnt="${i}" aria-label="Remove ${esc(m.name)}">×</button></span>`).join('')
+    : '<span class="hint">Add everyone who manages this team — one person or several.</span>';
 }
 
 function teamCard(t) {
@@ -2752,7 +2910,39 @@ function teamCard(t) {
   </div>`;
 }
 
+$('#teamsBody').addEventListener('input', (e) => {
+  if (e.target.id === 'ntName') {
+    S.newTeamName = e.target.value.trim();
+    syncNewTeamUI();
+  }
+});
+
+$('#teamsBody').addEventListener('keydown', (e) => {
+  if (e.target.id === 'ntPersonName' && e.key === 'Enter') {
+    e.preventDefault();
+    $('#btnNtAddPerson').click();
+  }
+});
+
 $('#teamsBody').addEventListener('click', async (e) => {
+  if (e.target.closest('#btnNtAddPerson')) {
+    const n = $('#ntPersonName').value.trim();
+    if (!n) return toast('Type a name first', true);
+    if (S.newTeamPeople.some((m) => m.name.toLowerCase() === n.toLowerCase())) {
+      return toast(n + ' is already on the list', true);
+    }
+    S.newTeamPeople.push({ name: n, role: $('#ntPersonRole').value || 'Manager' });
+    $('#ntPersonName').value = '';
+    syncNewTeamUI();
+    return;
+  }
+  const rmnt = e.target.closest('[data-rmnt]');
+  if (rmnt) {
+    S.newTeamPeople.splice(+rmnt.getAttribute('data-rmnt'), 1);
+    syncNewTeamUI();
+    return;
+  }
+
   const em = e.target.closest('[data-em]');
   if (em) {
     S.newTeamEmoji = em.dataset.em;
@@ -2778,15 +2968,11 @@ $('#teamsBody').addEventListener('click', async (e) => {
   if (e.target.closest('#btnAddTeam')) {
     const name = $('#ntName').value.trim();
     if (!name) return toast('Give the team a name', true);
-    // "Isaac (Commissioner), Marcus" — role in parentheses is optional.
-    const managers = $('#ntMgrs').value.split(',').map((raw) => {
-      const t2 = raw.trim();
-      if (!t2) return null;
-      const m = t2.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
-      return m ? { name: m[1].trim(), role: m[2].trim() } : { name: t2, role: 'Manager' };
-    }).filter(Boolean);
+    const managers = S.newTeamPeople.slice();
     const before = S.league.teams.length;
-    await act({ action:'addTeam', name, emoji:S.newTeamEmoji, managers }, 'Team added 🏆');
+    if (!(await act({ action:'addTeam', name, emoji:S.newTeamEmoji, managers },
+                    managers.length ? `${name} added with ${managers.length} manager${managers.length === 1 ? '' : 's'} 🏆`
+                                    : `${name} added 🏆`))) return;
     // Auto-claim the first team you create if you have no team yet.
     const added = S.league.teams[before];
     if (added && !S.me.teamId && managers.length) {
@@ -2794,7 +2980,7 @@ $('#teamsBody').addEventListener('click', async (e) => {
       S.me.teamId = added.id;
       saveMe();
     }
-    $('#ntName').value = ''; $('#ntMgrs').value = '';
+    S.newTeamName = ''; S.newTeamPeople = [];
     renderTeams();
     return;
   }
