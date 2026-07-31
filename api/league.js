@@ -461,6 +461,24 @@ module.exports = async function handler(req, res) {
       .filter((k) => /supa|super|upstash|redis|^kv_/i.test(k))
       .filter((k) => !(k in meta.env))
       .sort();
+
+    // ?check=1 does a real write-then-read round trip against the configured
+    // store. Config looking correct is not the same as the credential working
+    // or the table existing — this proves the whole path end to end.
+    if (req.query && req.query.check) {
+      const probe = 'ffhub:healthcheck';
+      const stamp = 'ok-' + Date.now();
+      try {
+        await writeRaw(probe, JSON.stringify({ stamp }));
+        const back = await readRaw(probe);
+        const got = back ? JSON.parse(back).stamp : null;
+        meta.storageOk = got === stamp;
+        if (!meta.storageOk) meta.storageError = 'wrote a value but read back: ' + String(got);
+      } catch (err) {
+        meta.storageOk = false;
+        meta.storageError = String((err && err.message) || err).slice(0, 300);
+      }
+    }
   }
 
   try {
