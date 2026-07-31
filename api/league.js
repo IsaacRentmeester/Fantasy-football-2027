@@ -440,6 +440,29 @@ module.exports = async function handler(req, res) {
 
   const meta = { driver: DRIVER, ephemeral: DRIVER === 'memory' };
 
+  // Status ping (no id) reports which storage variables this deployment can
+  // actually see. Booleans and names only — never values — so it is safe to
+  // read publicly, and it turns "why is it still on memory" into one glance.
+  const isStatusPing = req.method === 'GET' && !(req.query && req.query.id);
+  if (isStatusPing) {
+    const seen = (k) => !!(process.env[k] && String(process.env[k]).trim());
+    meta.env = {
+      KV_REST_API_URL: seen('KV_REST_API_URL'),
+      KV_REST_API_TOKEN: seen('KV_REST_API_TOKEN'),
+      UPSTASH_REDIS_REST_URL: seen('UPSTASH_REDIS_REST_URL'),
+      UPSTASH_REDIS_REST_TOKEN: seen('UPSTASH_REDIS_REST_TOKEN'),
+      SUPABASE_URL: seen('SUPABASE_URL'),
+      SUPABASE_SERVICE_ROLE_KEY: seen('SUPABASE_SERVICE_ROLE_KEY'),
+      SUPABASE_ANON_KEY: seen('SUPABASE_ANON_KEY'),
+    };
+    // Anything storage-shaped that we do NOT recognise — catches typos like
+    // SUPERBASE_URL, which would otherwise fail completely silently.
+    meta.unrecognised = Object.keys(process.env)
+      .filter((k) => /supa|super|upstash|redis|^kv_/i.test(k))
+      .filter((k) => !(k in meta.env))
+      .sort();
+  }
+
   try {
     if (req.method === 'GET') {
       const id = clean((req.query && req.query.id) || '', 40);
