@@ -23,7 +23,12 @@
 
 const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
 const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
-const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+// Accept either the base project URL or the REST endpoint — Supabase's dashboard
+// shows both, and pasting the longer one would otherwise double the /rest/v1 path.
+const SB_URL = (process.env.SUPABASE_URL || '')
+  .trim()
+  .replace(/\/+$/, '')
+  .replace(/\/rest\/v1$/i, '');
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 const SB_TABLE = process.env.SUPABASE_TABLE || 'leagues';
 
