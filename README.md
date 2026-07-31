@@ -59,8 +59,12 @@ code change.
 A fantasy team is often run by more than one person, so a team here is a **name,
 a logo, and a list of managers** rather than a single owner.
 
-- Add a team with any number of managers up front (`Isaac, Marcus`), or add
-  co-managers one at a time afterwards.
+- Add a team with any number of people up front (`Isaac (Commissioner), Marcus`)
+  — a role in parentheses is optional — or add them one at a time afterwards
+  with a role picker.
+- Everyone on a team carries a **role**: Commissioner, Treasurer, Trade rep,
+  Draft host, Trash talk officer and so on, or anything you type. Change it from
+  the dropdown on their chip and it saves immediately.
 - Pick a logo from 24 emoji — it becomes the team's identity everywhere.
 - Tap **This is my team** to attach yourself. Your name and logo then follow you
   onto your draft-date vote, your chat posts, and the draft order.
@@ -111,6 +115,22 @@ you make" finds the one that actually works.
 
 Votes are keyed per browser, so anyone can change their answer later without
 double-counting.
+
+## What gets saved
+
+Everything shared lives server-side against the configured store, so it is the
+same for everyone on the link and survives reloads and restarts:
+
+league name · candidate dates · every vote and who cast it · the locked draft
+date · every team with its logo · every person on each team and their role ·
+the drawn draft order · weekly awards · power rankings · the constitution ·
+every message on the board
+
+The only thing kept per-device is which person *you* are, so the app knows whose
+vote to update — that is deliberately local.
+
+Until a storage driver is configured the API keeps this in memory and the UI
+shows an amber warning, because a cold start would wipe it.
 
 ## Deploying
 

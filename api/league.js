@@ -43,6 +43,7 @@ const LIMITS = {
   awards: 200,
   rules: 4000,
   emoji: 8,
+  role: 28,
 };
 
 const memory = new Map();
@@ -114,6 +115,12 @@ function normalize(doc) {
   if (!doc.votes || typeof doc.votes !== 'object') doc.votes = {};
   if (!Array.isArray(doc.messages)) doc.messages = [];
   if (!Array.isArray(doc.teams)) doc.teams = [];
+  // Upgrade pre-roles teams (managers were bare strings) in place.
+  doc.teams.forEach((t) => {
+    if (!Array.isArray(t.managers)) { t.managers = []; return; }
+    t.managers = t.managers.map((m) =>
+      typeof m === 'string' ? { name: m, role: 'Manager' } : m).filter((m) => m && m.name);
+  });
   if (!Array.isArray(doc.awards)) doc.awards = [];
   if (doc.locked === undefined) doc.locked = null;
   if (doc.order === undefined) doc.order = null;
@@ -194,18 +201,30 @@ function doCreate(body) {
 
 const findTeam = (doc, id) => doc.teams.find((t) => t.id === clean(id, 40));
 
-/** Names of co-managers, de-duplicated case-insensitively. */
+/**
+ * Co-managers as {name, role}, de-duplicated case-insensitively.
+ *
+ * Accepts bare strings too, so team documents written before roles existed
+ * upgrade in place on the next read instead of breaking.
+ */
 function cleanManagers(list) {
   const out = [];
   const seen = new Set();
   (Array.isArray(list) ? list : []).forEach((m) => {
-    const n = clean(m, LIMITS.name);
-    if (!n || seen.has(n.toLowerCase())) return;
-    seen.add(n.toLowerCase());
-    out.push(n);
+    const isStr = typeof m === 'string';
+    const name = clean(isStr ? m : (m && m.name), LIMITS.name);
+    const role = clean(isStr ? '' : (m && m.role), LIMITS.role);
+    if (!name || seen.has(name.toLowerCase())) return;
+    seen.add(name.toLowerCase());
+    out.push({ name, role: role || 'Manager' });
   });
   return out.slice(0, LIMITS.managers);
 }
+
+const findManager = (team, name) => {
+  const n = clean(name, LIMITS.name).toLowerCase();
+  return team.managers.find((m) => m.name.toLowerCase() === n);
+};
 
 const ACTIONS = {
   vote(doc, body) {
@@ -301,21 +320,33 @@ const ACTIONS = {
   },
 
   /** Add one co-manager without needing to resend the whole roster. */
+  /** Add a co-manager, or update the role of one who is already listed. */
   joinTeam(doc, body) {
     const team = findTeam(doc, body.teamId);
     if (!team) return { error: 'team not found' };
     const manager = clean(body.manager, LIMITS.name);
     if (!manager) return { error: 'manager name required' };
+    const role = clean(body.role, LIMITS.role) || 'Manager';
+
+    const existing = findManager(team, manager);
+    if (existing) { existing.role = role; return; }
     if (team.managers.length >= LIMITS.managers) return { error: 'manager limit reached' };
-    if (team.managers.some((m) => m.toLowerCase() === manager.toLowerCase())) return;
-    team.managers.push(manager);
+    team.managers.push({ name: manager, role });
+  },
+
+  setRole(doc, body) {
+    const team = findTeam(doc, body.teamId);
+    if (!team) return { error: 'team not found' };
+    const m = findManager(team, body.manager);
+    if (!m) return { error: 'manager not found' };
+    m.role = clean(body.role, LIMITS.role) || 'Manager';
   },
 
   leaveTeam(doc, body) {
     const team = findTeam(doc, body.teamId);
     if (!team) return { error: 'team not found' };
-    const manager = clean(body.manager, LIMITS.name);
-    team.managers = team.managers.filter((m) => m.toLowerCase() !== manager.toLowerCase());
+    const n = clean(body.manager, LIMITS.name).toLowerCase();
+    team.managers = team.managers.filter((m) => m.name.toLowerCase() !== n);
   },
 
   /* ---------------------------------------------------- draft order */

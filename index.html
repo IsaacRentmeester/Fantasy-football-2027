@@ -382,6 +382,11 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
   background:var(--bg2);border:1px solid var(--line2);font-size:12px;font-weight:640;
 }
 .mgr .dot{width:6px;height:6px;border-radius:50%;background:var(--grass-lt);flex:none}
+.mgr b{font-weight:700}
+.mgr .rolesel{
+  width:auto;padding:2px 4px;font-size:10.5px;font-weight:650;border-radius:5px;
+  background:rgba(46,163,106,.14);border:1px solid rgba(46,163,106,.34);color:var(--grass-lt);
+}
 .mgr button{color:var(--muted2);font-size:14px;line-height:1;padding:0 1px}
 .mgr button:hover{color:var(--red)}
 .tacts{display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:11px}
@@ -1577,6 +1582,17 @@ const S = {
 const TEAM_EMOJI = ['🏈','🐐','🔥','⚡','👑','🦅','🐻','🦁','🐺','🦈','🐉','💀',
                     '🚀','⚔️','🍺','🌮','🦖','🤖','👽','🐍','🎯','💎','🧨','🏴‍☠️'];
 
+/* Roles a person can hold on a team. Free text is allowed too — these are
+   just the common ones so nobody has to type. */
+const ROLES = ['Commissioner', 'Co-commissioner', 'Manager', 'Co-manager',
+               'Owner', 'Treasurer', 'Trade rep', 'Waiver wire', 'Draft host',
+               'Trash talk officer', 'Benchwarmer'];
+
+const mgrName = (m) => (typeof m === 'string' ? m : (m && m.name) || '');
+const mgrRole = (m) => (typeof m === 'string' ? 'Manager' : (m && m.role) || 'Manager');
+const onRoster = (team, who) =>
+  !!(team && who && team.managers.some((m) => mgrName(m).toLowerCase() === who.toLowerCase()));
+
 /* ==================================================================
    HELPERS
    ================================================================== */
@@ -2582,7 +2598,7 @@ function renderTeams() {
         </div>
         <div style="align-self:flex-end"><button class="btn pri" id="btnSaveMe">✅ Save</button></div>
       </div>
-      ${S.me.name && mine && !mine.managers.some((m) => m.toLowerCase() === S.me.name.toLowerCase())
+      ${S.me.name && mine && !onRoster(mine, S.me.name)
         ? `<div class="spacer"></div><div class="banner warn">⚠️ <div>You're set to <b>${esc(mine.name)}</b> but your name isn't on its roster yet.
              <div style="margin-top:7px"><button class="btn sm" data-join="${esc(mine.id)}">➕ Add me as a co-manager</button></div></div></div>`
         : ''}
@@ -2624,7 +2640,7 @@ function renderTeams() {
 
 function teamCard(t) {
   const isMine = t.id === S.me.teamId;
-  const onIt = S.me.name && t.managers.some((m) => m.toLowerCase() === S.me.name.toLowerCase());
+  const onIt = onRoster(t, S.me.name);
   return `
   <div class="teamcard ${isMine ? 'mine' : ''}">
     ${isMine ? '<div class="tbar"></div>' : ''}
@@ -2637,12 +2653,22 @@ function teamCard(t) {
     </div>
     <div class="mgrs">
       ${t.managers.length
-        ? t.managers.map((m) => `<span class="mgr"><span class="dot"></span>${esc(m)}
-            <button data-drop="${esc(t.id)}" data-mgr="${esc(m)}" title="Remove ${esc(m)}">×</button></span>`).join('')
+        ? t.managers.map((m) => {
+            const nm = mgrName(m), rl = mgrRole(m);
+            return `<span class="mgr"><span class="dot"></span><b>${esc(nm)}</b>
+              <select class="rolesel" data-setrole="${esc(t.id)}" data-mgr="${esc(nm)}" title="Role on this team">
+                ${ROLES.concat(ROLES.includes(rl) ? [] : [rl]).map((r) =>
+                  `<option ${r === rl ? 'selected' : ''}>${esc(r)}</option>`).join('')}
+              </select>
+              <button data-drop="${esc(t.id)}" data-mgr="${esc(nm)}" title="Remove ${esc(nm)}">×</button></span>`;
+          }).join('')
         : '<span class="hint">Nobody on this team yet.</span>'}
     </div>
     <div class="row" style="gap:7px;margin-bottom:11px">
-      <input type="text" class="grow" data-mgrinput="${esc(t.id)}" placeholder="Add a co-manager…" maxlength="40" style="min-width:120px">
+      <input type="text" class="grow" data-mgrinput="${esc(t.id)}" placeholder="Add a person…" maxlength="40" style="min-width:110px">
+      <select data-roleinput="${esc(t.id)}" style="max-width:150px">
+        ${ROLES.map((r) => `<option ${r === 'Manager' ? 'selected' : ''}>${esc(r)}</option>`).join('')}
+      </select>
       <button class="btn sm" data-addmgr="${esc(t.id)}">➕ Add</button>
     </div>
     <div class="tacts">
@@ -2669,8 +2695,8 @@ $('#teamsBody').addEventListener('click', async (e) => {
     saveMe();
     // Keep the roster honest: claiming a team puts you on it.
     const mt = myTeam();
-    if (S.me.name && mt && !mt.managers.some((m) => m.toLowerCase() === S.me.name.toLowerCase())) {
-      await act({ action:'joinTeam', teamId: mt.id, manager: S.me.name }, 'Added you to ' + mt.name);
+    if (S.me.name && mt && !onRoster(mt, S.me.name)) {
+      await act({ action:'joinTeam', teamId: mt.id, manager: S.me.name, role: 'Manager' }, 'Added you to ' + mt.name);
     } else { toast('Saved 👍'); }
     renderTeams();
     return;
@@ -2679,13 +2705,19 @@ $('#teamsBody').addEventListener('click', async (e) => {
   if (e.target.closest('#btnAddTeam')) {
     const name = $('#ntName').value.trim();
     if (!name) return toast('Give the team a name', true);
-    const managers = $('#ntMgrs').value.split(',').map((s) => s.trim()).filter(Boolean);
+    // "Isaac (Commissioner), Marcus" — role in parentheses is optional.
+    const managers = $('#ntMgrs').value.split(',').map((raw) => {
+      const t2 = raw.trim();
+      if (!t2) return null;
+      const m = t2.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+      return m ? { name: m[1].trim(), role: m[2].trim() } : { name: t2, role: 'Manager' };
+    }).filter(Boolean);
     const before = S.league.teams.length;
     await act({ action:'addTeam', name, emoji:S.newTeamEmoji, managers }, 'Team added 🏆');
     // Auto-claim the first team you create if you have no team yet.
     const added = S.league.teams[before];
     if (added && !S.me.teamId && managers.length) {
-      S.me.name = S.me.name || managers[0];
+      S.me.name = S.me.name || mgrName(managers[0]);
       S.me.teamId = added.id;
       saveMe();
     }
@@ -2704,7 +2736,7 @@ $('#teamsBody').addEventListener('click', async (e) => {
     const who = S.me.name || (prompt('Your name?') || '').trim();
     if (!who) return;
     S.me.name = who; S.me.teamId = joinId; saveMe();
-    await act({ action:'joinTeam', teamId: joinId, manager: who }, 'You’re on the roster 🙌');
+    await act({ action:'joinTeam', teamId: joinId, manager: who, role: 'Manager' }, 'You’re on the roster 🙌');
     renderTeams();
     return;
   }
@@ -2712,9 +2744,11 @@ $('#teamsBody').addEventListener('click', async (e) => {
   const addId = t('data-addmgr');
   if (addId) {
     const input = $(`[data-mgrinput="${addId}"]`, $('#teamsBody'));
+    const roleSel = $(`[data-roleinput="${addId}"]`, $('#teamsBody'));
     const val = input && input.value.trim();
     if (!val) return toast('Type a name first', true);
-    await act({ action:'joinTeam', teamId: addId, manager: val }, val + ' added');
+    const role = (roleSel && roleSel.value) || 'Manager';
+    await act({ action:'joinTeam', teamId: addId, manager: val, role }, `${val} added as ${role}`);
     renderTeams();
     return;
   }
@@ -2744,6 +2778,19 @@ $('#teamsBody').addEventListener('click', async (e) => {
     await act({ action:'removeTeam', teamId: delId }, 'Team removed');
     renderTeams();
   }
+});
+
+// Changing a role select saves immediately.
+$('#teamsBody').addEventListener('change', async (e) => {
+  const sel = e.target.closest('[data-setrole]');
+  if (!sel) return;
+  await act({
+    action: 'setRole',
+    teamId: sel.getAttribute('data-setrole'),
+    manager: sel.getAttribute('data-mgr'),
+    role: sel.value,
+  }, sel.getAttribute('data-mgr') + ' is now ' + sel.value);
+  renderTeams();
 });
 
 // Enter key submits the per-team co-manager input.
@@ -2816,7 +2863,7 @@ function renderLottery() {
         return `<div class="opick ${i === 0 ? 'p1' : ''}">
           <div class="onum">${i + 1}</div>
           <div class="oteam"><span class="em">${esc(t.emoji)}</span><span>${esc(t.name)}</span></div>
-          <div class="omgr">${esc(t.managers.join(', ') || '—')}</div>
+          <div class="omgr">${esc(t.managers.map((m) => mgrName(m) + ' · ' + mgrRole(m)).join(' / ') || '—')}</div>
         </div>`;
       }).join('')}
     </div>
