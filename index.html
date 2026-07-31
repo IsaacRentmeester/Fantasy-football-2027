@@ -1,0 +1,3040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fantasy 2027 — League Hub</title>
+<meta name="description" content="Draft date voting, a full standard-scoring draft guide, the complete NFL season calendar, and a league board — all in one place.">
+<style>
+:root{
+  --bg:#080c0a; --bg2:#0d1310; --panel:#121b16; --panel2:#16211b;
+  --line:#22322a; --line2:#2e4238;
+  --grass:#2ea36a; --grass-dk:#1c6b43; --grass-lt:#4fd18d;
+  --gold:#d9b061; --gold-dk:#a8823c;
+  --chalk:#eef4ef; --muted:#8ba193; --muted2:#5f7469;
+  --red:#e05a5a; --amber:#e0a44a; --blue:#5a9fe0;
+  --r:14px; --r-sm:9px;
+  --shadow:0 10px 34px rgba(0,0,0,.5);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--chalk);
+  line-height:1.5; min-height:100vh; -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(1100px 500px at 15% -10%, rgba(46,163,106,.13), transparent 60%),
+    radial-gradient(900px 460px at 92% 4%, rgba(217,176,97,.09), transparent 62%);
+  background-attachment:fixed;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+a{color:var(--grass-lt);text-decoration:none}
+a:hover{text-decoration:underline}
+::selection{background:rgba(46,163,106,.35)}
+
+/* ---------------------------------------------------------------- layout */
+.wrap{max-width:1240px;margin:0 auto;padding:0 18px}
+
+header.top{
+  position:sticky; top:0; z-index:60; backdrop-filter:blur(14px);
+  background:rgba(8,12,10,.9); border-bottom:1px solid var(--line);
+}
+.topin{display:flex;align-items:center;gap:16px;padding:12px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;margin-right:auto;min-width:0}
+.logo{
+  width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--grass),var(--grass-dk));
+  box-shadow:0 3px 14px rgba(46,163,106,.4); font-size:19px;
+}
+.brand h1{font-size:16px;font-weight:750;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .sub{font-size:11.5px;color:var(--muted);font-weight:500}
+
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+nav.tabs::-webkit-scrollbar{display:none}
+.tab{
+  padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:650;
+  color:var(--muted);white-space:nowrap;border:1px solid transparent;transition:.16s;
+}
+.tab:hover{color:var(--chalk);background:var(--panel)}
+.tab.on{background:var(--grass);color:#04120b;border-color:var(--grass-lt)}
+
+main{padding:26px 0 90px}
+.view{display:none;animation:fade .28s ease}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* --------------------------------------------------------------- shared */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.card+.card{margin-top:16px}
+h2.sec{font-size:22px;font-weight:780;letter-spacing:-.4px;margin-bottom:5px}
+h3{font-size:15.5px;font-weight:700;margin-bottom:11px}
+p.lede{color:var(--muted);font-size:14px;max-width:66ch}
+.hint{font-size:12.5px;color:var(--muted2);line-height:1.55}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1;min-width:0}
+.spacer{height:16px}
+
+.btn{
+  padding:10px 17px;border-radius:var(--r-sm);font-size:13.5px;font-weight:680;
+  background:var(--panel2);border:1px solid var(--line2);color:var(--chalk);transition:.15s;
+}
+.btn:hover{border-color:var(--grass);background:#1a2a21}
+.btn.pri{background:linear-gradient(160deg,var(--grass),var(--grass-dk));border-color:var(--grass-lt);color:#04120b}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.gold{background:linear-gradient(160deg,var(--gold),var(--gold-dk));border-color:var(--gold);color:#1a1206}
+.btn.sm{padding:6px 11px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+input[type=text],input[type=date],input[type=number],select,textarea{
+  background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r-sm);
+  padding:10px 12px;font-size:13.5px;width:100%;transition:.15s;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--grass);box-shadow:0 0 0 3px rgba(46,163,106,.16)}
+label.fld{display:block;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;background:var(--panel2);border:1px solid var(--line2);color:var(--muted)}
+.pill.g{background:rgba(46,163,106,.16);border-color:rgba(46,163,106,.42);color:var(--grass-lt)}
+.pill.gold{background:rgba(217,176,97,.14);border-color:rgba(217,176,97,.4);color:var(--gold)}
+.pill.r{background:rgba(224,90,90,.14);border-color:rgba(224,90,90,.4);color:var(--red)}
+
+.banner{padding:12px 15px;border-radius:var(--r-sm);font-size:13px;display:flex;gap:10px;align-items:flex-start;border:1px solid}
+.banner.warn{background:rgba(224,164,74,.1);border-color:rgba(224,164,74,.36);color:#f0cf9a}
+.banner.err{background:rgba(224,90,90,.1);border-color:rgba(224,90,90,.36);color:#f0a8a8}
+.banner.ok{background:rgba(46,163,106,.1);border-color:rgba(46,163,106,.36);color:#a8e5c6}
+
+.empty{text-align:center;padding:44px 20px;color:var(--muted2)}
+.empty .ico{font-size:34px;margin-bottom:10px;opacity:.55}
+
+/* ----------------------------------------------------------------- home */
+.hero{
+  border-radius:var(--r); padding:30px; border:1px solid var(--line);
+  background:linear-gradient(150deg,rgba(46,163,106,.15),rgba(8,12,10,.6) 55%),var(--panel);
+  position:relative; overflow:hidden;
+}
+.hero:after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.13;
+  background-image:repeating-linear-gradient(90deg,transparent 0 58px,rgba(255,255,255,.5) 58px 59px);
+}
+.hero h2{font-size:clamp(26px,4.4vw,40px);font-weight:820;letter-spacing:-1.1px;line-height:1.1}
+.hero p{color:var(--muted);margin-top:9px;font-size:14.5px;max-width:60ch}
+.cd{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;position:relative;z-index:1}
+.cdbox{background:rgba(8,12,10,.62);border:1px solid var(--line2);border-radius:var(--r-sm);padding:11px 15px;min-width:76px;text-align:center}
+.cdbox b{display:block;font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;color:var(--gold)}
+.cdbox span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700}
+
+.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(224px,1fr));margin-top:16px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;text-align:left;transition:.16s;display:block;width:100%}
+.tile:hover{border-color:var(--grass);transform:translateY(-2px);box-shadow:var(--shadow)}
+.tile .ico{font-size:23px;margin-bottom:9px}
+.tile b{display:block;font-size:15px;font-weight:730;margin-bottom:3px}
+.tile span{font-size:12.5px;color:var(--muted);line-height:1.5}
+
+.keydates{display:grid;gap:9px;margin-top:6px}
+.kd{display:flex;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px dashed var(--line)}
+.kd:last-child{border-bottom:none}
+.kd b{font-size:12.5px;color:var(--gold);font-variant-numeric:tabular-nums;min-width:118px;flex:none;font-family:var(--mono)}
+.kd span{font-size:13.5px}
+.kd i{font-style:normal;color:var(--muted);font-size:12px;margin-left:auto;flex:none}
+
+/* ----------------------------------------------------------------- poll */
+.setup{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.datepick{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:650;background:var(--panel2);border:1px solid var(--line2)}
+.chip button{color:var(--muted);font-size:15px;line-height:1;padding:0 1px}
+.chip button:hover{color:var(--red)}
+
+.sharebar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r-sm);padding:11px 13px}
+.sharebar code{font-family:var(--mono);font-size:12px;color:var(--grass-lt);word-break:break-all;flex:1;min-width:160px}
+
+.votegrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));margin-top:14px}
+.vopt{
+  position:relative;overflow:hidden;text-align:left;padding:14px 15px;border-radius:var(--r-sm);
+  border:1.5px solid var(--line2);background:var(--panel2);transition:.16s;width:100%;
+}
+.vopt:hover{border-color:var(--grass);transform:translateY(-1px)}
+.vopt.picked{border-color:var(--grass);background:rgba(46,163,106,.13)}
+.vopt.win{border-color:var(--gold)}
+.vfill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,rgba(46,163,106,.26),rgba(46,163,106,.09));transition:width .5s cubic-bezier(.2,.8,.2,1);z-index:0}
+.vopt.win .vfill{background:linear-gradient(90deg,rgba(217,176,97,.3),rgba(217,176,97,.1))}
+.vopt>*{position:relative;z-index:1}
+.vday{font-size:11px;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.vdate{font-size:16.5px;font-weight:760;letter-spacing:-.3px;margin:2px 0 8px}
+.vbot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vpct{font-size:19px;font-weight:820;font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+.vopt.win .vpct{color:var(--gold)}
+.vcount{font-size:11.5px;color:var(--muted)}
+.vwho{font-size:11px;color:var(--muted2);margin-top:7px;line-height:1.45;word-break:break-word}
+.checkmk{position:absolute;top:11px;right:12px;font-size:14px;color:var(--grass-lt);z-index:2;display:none}
+.vopt.picked .checkmk{display:block}
+.crown{position:absolute;top:10px;right:11px;font-size:14px;z-index:2}
+
+.tally{display:flex;gap:16px;flex-wrap:wrap;padding-top:12px;margin-top:14px;border-top:1px solid var(--line)}
+.tally div{font-size:12.5px;color:var(--muted)}
+.tally b{color:var(--chalk);font-weight:750}
+
+/* ---------------------------------------------------------------- guide */
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:15px}
+.segs{display:inline-flex;background:var(--bg2);border:1px solid var(--line2);border-radius:999px;padding:3px;gap:2px}
+.seg{padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:680;color:var(--muted);transition:.14s}
+.seg:hover{color:var(--chalk)}
+.seg.on{background:var(--grass);color:#04120b}
+.search{max-width:250px}
+
+.board{display:grid;gap:9px}
+.pl{
+  display:grid;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r-sm);
+  background:var(--panel);border:1px solid var(--line);transition:.14s;cursor:pointer;
+  grid-template-columns:44px minmax(0,1fr) auto;
+}
+.pl:hover{border-color:var(--grass);background:var(--panel2)}
+.pl.open{border-color:var(--grass);background:var(--panel2)}
+.plrank{
+  width:44px;height:44px;border-radius:10px;display:grid;place-items:center;flex:none;
+  font-size:15px;font-weight:820;font-variant-numeric:tabular-nums;
+  background:var(--bg2);border:1px solid var(--line2);letter-spacing:-.5px;
+}
+.pl.t1 .plrank{background:linear-gradient(150deg,rgba(217,176,97,.3),rgba(217,176,97,.08));border-color:var(--gold);color:var(--gold)}
+.pl.t2 .plrank{background:rgba(46,163,106,.18);border-color:var(--grass);color:var(--grass-lt)}
+.plmain{min-width:0}
+.plname{font-size:15px;font-weight:730;letter-spacing:-.25px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.plmeta{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.posbadge{padding:2px 7px;border-radius:5px;font-size:10.5px;font-weight:800;letter-spacing:.4px}
+.posQB{background:rgba(224,90,90,.2);color:#f0a0a0}
+.posRB{background:rgba(46,163,106,.22);color:var(--grass-lt)}
+.posWR{background:rgba(90,159,224,.2);color:#9fc9f0}
+.posTE{background:rgba(217,176,97,.2);color:var(--gold)}
+.posK{background:rgba(150,150,170,.18);color:#b8b8c8}
+.posDST{background:rgba(160,120,200,.2);color:#c4a8e0}
+.plright{text-align:right;flex:none}
+.plval{font-size:12px;font-weight:750;font-variant-numeric:tabular-nums}
+.val-up{color:var(--grass-lt)}
+.val-dn{color:var(--red)}
+.val-ev{color:var(--muted2)}
+.plrd{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap}
+
+.pdet{grid-column:1/-1;padding-top:13px;margin-top:2px;border-top:1px solid var(--line);display:none;gap:13px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.pl.open .pdet{display:grid}
+.pbox h4{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.pbox p{font-size:13px;color:#c8d6cd;line-height:1.6}
+.h-pro{color:var(--grass-lt)}
+.h-con{color:var(--red)}
+.h-when{color:var(--gold)}
+.h-who{color:var(--blue)}
+
+.tierhead{
+  display:flex;align-items:center;gap:11px;margin:22px 0 10px;padding-bottom:7px;
+  border-bottom:1px solid var(--line);
+}
+.tierhead:first-child{margin-top:0}
+.tierhead b{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gold)}
+.tierhead span{font-size:12px;color:var(--muted)}
+
+.rounds{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rd{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:15px}
+.rd b{font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.9px;display:block;margin-bottom:7px}
+.rd p{font-size:13px;color:#c8d6cd;line-height:1.6}
+
+/* -------------------------------------------------------------- schedule */
+.wkbar{display:flex;gap:5px;overflow-x:auto;padding:4px 0 9px;scrollbar-width:thin}
+.wk{
+  flex:none;min-width:52px;padding:8px 10px;border-radius:var(--r-sm);text-align:center;
+  background:var(--panel);border:1px solid var(--line);transition:.14s;
+}
+.wk:hover{border-color:var(--grass)}
+.wk.on{background:var(--grass);border-color:var(--grass-lt);color:#04120b}
+.wk b{display:block;font-size:13.5px;font-weight:780}
+.wk span{font-size:10px;opacity:.75;white-space:nowrap}
+
+.daygrp{margin-top:18px}
+.dayhd{
+  display:flex;align-items:baseline;gap:10px;padding-bottom:7px;margin-bottom:9px;
+  border-bottom:1px solid var(--line);
+}
+.dayhd b{font-size:14px;font-weight:760}
+.dayhd span{font-size:12px;color:var(--muted)}
+.games{display:grid;gap:8px}
+.gm{
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+  padding:11px 14px;border-radius:var(--r-sm);background:var(--panel);border:1px solid var(--line);
+}
+.gm:hover{border-color:var(--line2)}
+.gmteams{font-size:14px;font-weight:660;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.gmteams .at{color:var(--muted2);font-size:11.5px;font-weight:600}
+.gmnote{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.gmtime{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;flex:none}
+.gmtime span{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.byebar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding:11px 14px;background:rgba(224,164,74,.07);border:1px solid rgba(224,164,74,.26);border-radius:var(--r-sm);margin-top:14px}
+.byebar b{font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);font-weight:800}
+.byeteam{padding:3px 8px;border-radius:5px;background:rgba(224,164,74,.14);font-size:11.5px;font-weight:700;font-family:var(--mono)}
+
+.byetable{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.byerow{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px}
+.byerow b{display:block;font-size:11.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.byerow div{display:flex;gap:5px;flex-wrap:wrap}
+
+/* ----------------------------------------------------------------- board */
+.msgs{display:grid;gap:10px;max-height:520px;overflow-y:auto;padding-right:4px}
+.msg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px}
+.msghd{display:flex;align-items:baseline;gap:9px;margin-bottom:5px}
+.msghd b{font-size:13px;font-weight:730;color:var(--grass-lt)}
+.msghd span{font-size:11px;color:var(--muted2);margin-left:auto}
+.msg p{font-size:13.5px;color:#d4e0d8;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+
+/* ----------------------------------------------------------------- toast */
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,26px);z-index:200;
+  background:var(--panel2);border:1px solid var(--grass);border-radius:999px;
+  padding:11px 20px;font-size:13.5px;font-weight:650;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transition:.28s cubic-bezier(.2,.8,.2,1);max-width:90vw;text-align:center;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.err{border-color:var(--red)}
+
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--grass);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:var(--muted2);font-size:12px}
+
+/* ------------------------------------------------- big labeled nav buttons */
+.navbtn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  min-width:82px;min-height:56px;padding:7px 12px;border-radius:12px;
+  border:1px solid transparent;color:var(--muted);transition:.16s;flex:none;
+}
+.navbtn .ni{font-size:20px;line-height:1}
+.navbtn .nl{font-size:11px;font-weight:750;letter-spacing:.2px;white-space:nowrap}
+.navbtn:hover{color:var(--chalk);background:var(--panel)}
+.navbtn.on{background:var(--grass);color:#04120b;border-color:var(--grass-lt);box-shadow:0 3px 14px rgba(46,163,106,.32)}
+
+.iconbtn{
+  width:42px;height:42px;border-radius:11px;display:grid;place-items:center;flex:none;
+  background:var(--panel2);border:1px solid var(--line2);font-size:17px;transition:.15s;
+}
+.iconbtn:hover{border-color:var(--grass);background:#1a2a21}
+
+/* Identity chip — who you are, everywhere */
+.mechip{
+  display:flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border-radius:999px;
+  background:var(--panel2);border:1px solid var(--line2);transition:.15s;flex:none;max-width:210px;
+}
+.mechip:hover{border-color:var(--grass)}
+.mechip .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:var(--bg2);flex:none}
+.mechip .who{min-width:0;text-align:left}
+.mechip .who b{display:block;font-size:12.5px;font-weight:730;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mechip .who span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Big action buttons with an icon + label */
+.bigbtn{
+  display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  padding:16px 18px;border-radius:var(--r);border:1.5px solid var(--line2);
+  background:var(--panel2);transition:.16s;min-height:64px;
+}
+.bigbtn:hover{border-color:var(--grass);transform:translateY(-2px);box-shadow:var(--shadow)}
+.bigbtn .bi{
+  width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;flex:none;
+  background:linear-gradient(150deg,rgba(46,163,106,.26),rgba(46,163,106,.07));border:1px solid rgba(46,163,106,.34);
+}
+.bigbtn.gold .bi{background:linear-gradient(150deg,rgba(217,176,97,.28),rgba(217,176,97,.07));border-color:rgba(217,176,97,.4)}
+.bigbtn b{display:block;font-size:15px;font-weight:740;letter-spacing:-.2px}
+.bigbtn span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.45}
+.bigbtn .arw{margin-left:auto;color:var(--muted2);font-size:18px;flex:none}
+
+.tile{display:flex;align-items:center;gap:14px;text-align:left;min-height:88px}
+.tile .ico{
+  width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:26px;flex:none;margin-bottom:0;
+  background:linear-gradient(150deg,rgba(46,163,106,.24),rgba(46,163,106,.06));border:1px solid rgba(46,163,106,.3);
+}
+.tile .tx{min-width:0}
+.tile b{font-size:15.5px}
+
+/* -------------------------------------------------------------- teams */
+.teamgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+.teamcard{
+  background:var(--panel);border:1.5px solid var(--line);border-radius:var(--r);padding:16px;
+  transition:.16s;position:relative;overflow:hidden;
+}
+.teamcard:hover{border-color:var(--line2)}
+.teamcard.mine{border-color:var(--grass);background:linear-gradient(160deg,rgba(46,163,106,.1),var(--panel))}
+.teamcard .tbar{position:absolute;inset:0 0 auto 0;height:3px;background:var(--grass)}
+.thead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.tlogo{
+  width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:26px;flex:none;
+  background:var(--bg2);border:1px solid var(--line2);
+}
+.thead .tn{min-width:0;flex:1}
+.thead .tn b{display:block;font-size:16px;font-weight:760;letter-spacing:-.3px;word-break:break-word}
+.thead .tn span{font-size:11.5px;color:var(--muted)}
+.mgrs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mgr{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;
+  background:var(--bg2);border:1px solid var(--line2);font-size:12px;font-weight:640;
+}
+.mgr .dot{width:6px;height:6px;border-radius:50%;background:var(--grass-lt);flex:none}
+.mgr button{color:var(--muted2);font-size:14px;line-height:1;padding:0 1px}
+.mgr button:hover{color:var(--red)}
+.tacts{display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:11px}
+
+/* --------------------------------------------------------- draft order */
+.lottery{
+  border-radius:var(--r);padding:24px;border:1px solid var(--line2);text-align:center;
+  background:linear-gradient(160deg,rgba(217,176,97,.11),var(--panel) 60%);
+}
+.orderlist{display:grid;gap:8px;margin-top:16px;text-align:left}
+.opick{
+  display:flex;align-items:center;gap:13px;padding:12px 15px;border-radius:var(--r-sm);
+  background:var(--panel2);border:1px solid var(--line2);
+  animation:slideIn .45s cubic-bezier(.2,.9,.25,1) both;
+}
+.opick.p1{border-color:var(--gold);background:linear-gradient(100deg,rgba(217,176,97,.18),var(--panel2))}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px) scale(.97)}to{opacity:1;transform:none}}
+.onum{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none;
+  font-size:15px;font-weight:820;font-variant-numeric:tabular-nums;
+  background:var(--bg2);border:1px solid var(--line2);
+}
+.opick.p1 .onum{background:rgba(217,176,97,.22);border-color:var(--gold);color:var(--gold)}
+.opick .oteam{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px;min-width:0}
+.opick .oteam .em{font-size:19px;flex:none}
+.opick .omgr{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right;flex:none}
+.drumroll{font-size:44px;animation:shake .5s infinite}
+@keyframes shake{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+
+/* ---------------------------------------------------- awards + power */
+.awgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.award{
+  display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:var(--r-sm);
+  background:var(--panel);border:1px solid var(--line);
+}
+.award .am{font-size:26px;flex:none;line-height:1}
+.award .ab{min-width:0;flex:1}
+.award .ab b{display:block;font-size:14px;font-weight:730}
+.award .ab .aw{font-size:11px;color:var(--gold);font-weight:750;text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px}
+.award .ab p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5;word-break:break-word}
+
+.pwlist{display:grid;gap:8px}
+.pwrow{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-sm);
+  background:var(--panel);border:1px solid var(--line);
+}
+.pwrank{
+  width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none;
+  font-size:14px;font-weight:820;background:var(--bg2);border:1px solid var(--line2);
+}
+.pwrow:nth-child(1) .pwrank{background:rgba(217,176,97,.22);border-color:var(--gold);color:var(--gold)}
+.pwmain{min-width:0;flex:1}
+.pwmain b{display:block;font-size:14.5px;font-weight:720;display:flex;align-items:center;gap:8px}
+.pwmain input{margin-top:6px;font-size:12.5px;padding:7px 10px}
+.pwmain p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.pwmove{display:flex;flex-direction:column;gap:3px;flex:none}
+.pwmove button{
+  width:30px;height:24px;border-radius:6px;background:var(--panel2);border:1px solid var(--line2);
+  font-size:11px;color:var(--muted);
+}
+.pwmove button:hover{border-color:var(--grass);color:var(--chalk)}
+
+/* -------------------------------------------------------------- rules */
+.rulegrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rulebox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.rulebox h4{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:var(--gold);margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.rulebox p{font-size:13.5px;color:#cbd8ce;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.rulebox .none{color:var(--muted2);font-style:italic;font-size:13px}
+.rulebox textarea{min-height:92px;resize:vertical}
+
+/* emoji + colour pickers */
+.empick{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.emopt{
+  width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:21px;
+  background:var(--bg2);border:1.5px solid var(--line2);transition:.13s;
+}
+.emopt:hover{border-color:var(--grass);transform:scale(1.07)}
+.emopt.on{border-color:var(--gold);background:rgba(217,176,97,.16)}
+
+.subsegs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding-bottom:10px;margin-bottom:4px}
+.subsegs::-webkit-scrollbar{display:none}
+.subseg{
+  display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;font-size:13px;font-weight:680;
+  color:var(--muted);background:var(--panel);border:1px solid var(--line);white-space:nowrap;flex:none;transition:.14s;
+}
+.subseg:hover{color:var(--chalk);border-color:var(--line2)}
+.subseg.on{background:var(--grass);color:#04120b;border-color:var(--grass-lt)}
+
+/* ------------------------------------------------------------ responsive */
+@media(max-width:820px){
+  /* backdrop-filter on an ancestor makes it the containing block for
+     position:fixed descendants, which would pin the nav to the header
+     instead of the viewport. Drop it so the bottom bar anchors correctly. */
+  header.top{backdrop-filter:none;background:rgba(8,12,10,.97)}
+  nav.tabs{
+    position:fixed;left:0;right:0;bottom:0;z-index:80;
+    background:rgba(8,12,10,.97);backdrop-filter:blur(16px);
+    border-top:1px solid var(--line);border-bottom:none;
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+    gap:2px;justify-content:space-between;
+  }
+  .navbtn{min-width:0;flex:1;padding:6px 2px;min-height:52px;border-radius:10px}
+  .navbtn .ni{font-size:19px}
+  .navbtn .nl{font-size:9.5px;letter-spacing:0}
+  main{padding-bottom:96px}
+  footer{padding-bottom:90px}
+  #btnFull{display:none}
+}
+@media(max-width:640px){
+  .wrap{padding:0 13px}
+  .card{padding:15px}
+  .hero{padding:22px 18px}
+  .pl{grid-template-columns:38px minmax(0,1fr);row-gap:8px}
+  .plrank{width:38px;height:38px;font-size:13.5px}
+  .plright{grid-column:2;text-align:left;display:flex;gap:10px;align-items:center}
+  .plrd{margin-top:0}
+  .brand .sub{display:none}
+  .mechip{max-width:150px}
+  .mechip .who span{display:none}
+  h2.sec{font-size:19px}
+  .btn{padding:11px 16px}          /* fatter tap targets on touch */
+  .btn.sm{padding:8px 12px}
+  .teamgrid{grid-template-columns:1fr}
+  .votegrid{grid-template-columns:1fr}
+}
+:root:fullscreen .wrap{max-width:1600px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topin">
+    <div class="brand">
+      <div class="logo">🏈</div>
+      <div style="min-width:0">
+        <h1 id="leagueName">Fantasy 2027</h1>
+        <div class="sub">Fantasy Football Hub · 2026 Season</div>
+      </div>
+    </div>
+    <button class="mechip" id="meChip" title="Change who you are">
+      <span class="av" id="meAv">👤</span>
+      <span class="who"><b id="meName">Tap to sign in</b><span id="meTeam">No team yet</span></span>
+    </button>
+    <button class="iconbtn" id="btnFull" title="Full screen" aria-label="Toggle full screen">⛶</button>
+    <nav class="tabs" id="tabs">
+      <button class="navbtn on" data-v="home"><span class="ni">🏠</span><span class="nl">Home</span></button>
+      <button class="navbtn" data-v="teams"><span class="ni">🏆</span><span class="nl">Teams</span></button>
+      <button class="navbtn" data-v="poll"><span class="ni">🗓️</span><span class="nl">Draft Day</span></button>
+      <button class="navbtn" data-v="guide"><span class="ni">📋</span><span class="nl">Players</span></button>
+      <button class="navbtn" data-v="sched"><span class="ni">📺</span><span class="nl">Schedule</span></button>
+      <button class="navbtn" data-v="club"><span class="ni">💬</span><span class="nl">Clubhouse</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============================================================= HOME -->
+  <section class="view on" id="v-home">
+    <div class="hero">
+      <h2 id="heroTitle">Draft season starts now.</h2>
+      <p id="heroSub">Pick the draft date together, study the board, and know exactly when every game kicks off — one link for the whole league.</p>
+      <div class="cd" id="countdown"></div>
+    </div>
+
+    <div class="tiles">
+      <button class="tile" data-go="teams">
+        <div class="ico">🏆</div>
+        <div class="tx"><b>Teams &amp; managers</b>
+        <span>Add your team, name it, and put every co-manager on it.</span></div>
+      </button>
+      <button class="tile" data-go="poll">
+        <div class="ico">🗓️</div>
+        <div class="tx"><b>Vote on the draft date</b>
+        <span>Mark every date that works. Live percentages pick the winner.</span></div>
+      </button>
+      <button class="tile" data-go="poll">
+        <div class="ico">🎲</div>
+        <div class="tx"><b>Draft order lottery</b>
+        <span>One tap draws the order. Same result for everyone, no arguments.</span></div>
+      </button>
+      <button class="tile" data-go="guide">
+        <div class="ico">📋</div>
+        <div class="tx"><b>Player draft guide</b>
+        <span id="tileGuideSub">Standard-scoring board with tiers, pros, cons, and when to draft.</span></div>
+      </button>
+      <button class="tile" data-go="sched">
+        <div class="ico">📺</div>
+        <div class="tx"><b>Full season calendar</b>
+        <span>All 18 weeks with kickoff times, networks, and bye weeks.</span></div>
+      </button>
+      <button class="tile" data-go="club">
+        <div class="ico">💬</div>
+        <div class="tx"><b>Clubhouse</b>
+        <span>Trash talk, weekly awards, power rankings, and league rules.</span></div>
+      </button>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3>Key dates — 2026 season</h3>
+      <div class="keydates" id="keyDates"></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ TEAMS -->
+  <section class="view" id="v-teams">
+    <h2 class="sec">Teams &amp; managers</h2>
+    <p class="lede">Every team in the league, with everyone who runs it. A team can have as many co-managers as you want — add all of them so nobody's left off.</p>
+    <div class="spacer"></div>
+    <div id="teamsBody"></div>
+  </section>
+
+  <!-- ============================================================= POLL -->
+  <section class="view" id="v-poll">
+    <h2 class="sec">Draft date poll</h2>
+    <p class="lede">Every person opens the same link, types their name, and taps every date that works for them. The winning date is the one the most people can actually make.</p>
+    <div class="spacer"></div>
+
+    <div id="pollSetup">
+      <div class="card">
+        <h3>Start a poll for your league</h3>
+        <div class="setup">
+          <div>
+            <label class="fld" for="newLeagueName">League name</label>
+            <input type="text" id="newLeagueName" placeholder="Fantasy 2027" maxlength="60">
+            <div class="spacer"></div>
+            <label class="fld" for="dateAdd">Add candidate dates</label>
+            <div class="datepick">
+              <input type="date" id="dateAdd" class="grow">
+              <button class="btn" id="btnAddDate">Add</button>
+            </div>
+            <div class="hint" style="margin-top:8px">Or add a batch:
+              <button class="btn sm" id="btnWeekends" style="margin-left:4px">Next 6 weekends</button>
+            </div>
+            <div class="chips" id="newDateChips"></div>
+          </div>
+          <div>
+            <label class="fld">How it works</label>
+            <div class="hint" style="line-height:1.75">
+              1. Add the dates you'd consider for the draft.<br>
+              2. Create the poll — you get a shareable link.<br>
+              3. Send that link to the league.<br>
+              4. Everyone taps every date they're free.<br>
+              5. The date with the highest percentage wins.
+            </div>
+            <div class="spacer"></div>
+            <button class="btn pri" id="btnCreate" style="width:100%">Create poll &amp; get link</button>
+            <div class="spacer"></div>
+            <label class="fld" for="joinId">Already have a poll ID?</label>
+            <div class="datepick">
+              <input type="text" id="joinId" class="grow" placeholder="paste poll ID" maxlength="40">
+              <button class="btn" id="btnJoin">Join</button>
+            </div>
+          </div>
+        </div>
+        <div id="setupMsg"></div>
+      </div>
+    </div>
+
+    <div id="pollLive" style="display:none">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <div class="grow">
+            <h3 style="margin-bottom:3px" id="pollTitle">Draft date poll</h3>
+            <div class="hint" id="pollStatus">Loading…</div>
+          </div>
+          <button class="btn sm" id="btnRefresh">Refresh</button>
+        </div>
+
+        <div class="sharebar">
+          <span style="font-size:12px;color:var(--muted);font-weight:700">SHARE</span>
+          <code id="shareUrl"></code>
+          <button class="btn sm pri" id="btnCopy">Copy link</button>
+        </div>
+
+        <div id="lockedBanner"></div>
+
+        <div class="spacer"></div>
+        <label class="fld" for="voterName">Your name</label>
+        <div class="datepick">
+          <input type="text" id="voterName" class="grow" placeholder="Who are you?" maxlength="40">
+          <button class="btn pri" id="btnSubmitVote">Submit my dates</button>
+        </div>
+        <div class="hint" style="margin-top:7px">Tap every date below that works for you, then submit. You can change your answer any time.</div>
+
+        <div class="votegrid" id="voteGrid"></div>
+        <div class="tally" id="tally"></div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div class="grow">
+            <h3 style="margin-bottom:3px">Commissioner tools</h3>
+            <div class="hint">Add more options, or lock in the final date once you've decided.</div>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <div class="datepick">
+          <div class="grow" style="min-width:150px">
+            <label class="fld" for="moreDate">Add a date</label>
+            <input type="date" id="moreDate">
+          </div>
+          <button class="btn" id="btnMoreDate">➕ Add option</button>
+          <div class="grow" style="min-width:150px">
+            <label class="fld" for="lockSel">Lock final date</label>
+            <select id="lockSel"><option value="">— not locked —</option></select>
+          </div>
+          <button class="btn gold" id="btnLock">🔒 Lock it in</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🎲 Draft order lottery</h3>
+        <div class="hint" style="margin-bottom:4px">The draw happens on the server, so everyone who opens the link sees the exact same order. Nobody can reroll it privately.</div>
+        <div class="spacer"></div>
+        <div id="lotteryBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ GUIDE -->
+  <section class="view" id="v-guide">
+    <h2 class="sec">Draft guide — standard scoring</h2>
+    <p class="lede">Ranked for <b>non-PPR</b>: receptions are worth nothing, so touchdown equity and rushing volume carry the day. <b>VAL</b> compares my standard rank against where the market drafts him — green means he's usually available later than he should be.</p>
+    <div class="spacer"></div>
+
+    <div class="toolbar">
+      <div class="segs" id="posSegs">
+        <button class="seg on" data-p="ALL">All</button>
+        <button class="seg" data-p="FLEX">FLEX</button>
+        <button class="seg" data-p="RB">RB</button>
+        <button class="seg" data-p="WR">WR</button>
+        <button class="seg" data-p="QB">QB</button>
+        <button class="seg" data-p="TE">TE</button>
+        <button class="seg" data-p="K">K</button>
+        <button class="seg" data-p="DST">DEF</button>
+      </div>
+      <div class="segs" id="viewSegs">
+        <button class="seg on" data-m="list">Board</button>
+        <button class="seg" data-m="tier">Tiers</button>
+        <button class="seg" data-m="plan">Round plan</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" class="search grow" id="plSearch" placeholder="🔎 Search name, team or college…">
+      <select id="fTeam" style="max-width:170px"><option value="">🏟️ All teams</option></select>
+      <select id="fBye" style="max-width:150px"><option value="">🗓️ Any bye week</option></select>
+      <select id="fSort" style="max-width:190px">
+        <option value="rk">↕️ Best available</option>
+        <option value="val">↕️ Best value vs ADP</option>
+        <option value="adp">↕️ Market ADP</option>
+        <option value="name">↕️ Name A–Z</option>
+      </select>
+      <button class="btn sm" id="btnEnrich" title="Pull current teams, ages, colleges and injury status from Sleeper's public API">🔄 Sync live rosters</button>
+      <button class="btn sm" id="btnClearF">✕ Clear</button>
+    </div>
+
+    <div id="guideCount" class="hint" style="margin-bottom:10px"></div>
+    <div id="guideBody"></div>
+  </section>
+
+  <!-- ========================================================= SCHEDULE -->
+  <section class="view" id="v-sched">
+    <h2 class="sec">2026 season calendar</h2>
+    <p class="lede">Every game, every week. Times shown in <b id="tzLabel">your local timezone</b>. Live game data loads from ESPN's public feed and caches for six hours.</p>
+    <div class="spacer"></div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:6px">
+        <div class="segs" id="schedMode">
+          <button class="seg on" data-s="week">By week</button>
+          <button class="seg" data-s="byes">Bye weeks</button>
+        </div>
+        <div class="grow"></div>
+        <button class="btn sm" id="btnReloadSched">Reload games</button>
+      </div>
+      <div id="schedBody"></div>
+    </div>
+  </section>
+
+  <!-- ========================================================= CLUBHOUSE -->
+  <section class="view" id="v-club">
+    <h2 class="sec">Clubhouse</h2>
+    <p class="lede">Everything that isn't the draft — shared with everyone who has the league link.</p>
+    <div class="spacer"></div>
+
+    <div class="subsegs" id="clubSegs">
+      <button class="subseg on" data-c="chat"><span>💬</span> Trash talk</button>
+      <button class="subseg" data-c="awards"><span>🏅</span> Weekly awards</button>
+      <button class="subseg" data-c="power"><span>📈</span> Power rankings</button>
+      <button class="subseg" data-c="rules"><span>📜</span> Rules &amp; money</button>
+    </div>
+
+    <div id="clubBody"></div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <div>🏈 Fantasy Football Hub · 2026 season · Rankings are opinion, not gospel — verify ADP and rosters before you draft.</div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ==================================================================
+   CONSTANTS & DATA
+   ================================================================== */
+
+const API = '/api/league';
+
+/* 2026 bye weeks — confirmed for all 32 teams. Byes run Weeks 5–14
+   with no byes in Week 12 (Thanksgiving week). */
+const BYES = {
+  CAR:5, KC:5,
+  CIN:6, DET:6, MIA:6, MIN:6,
+  BUF:7, JAX:7, LAC:7, WAS:7,
+  HOU:8, NO:8, NYG:8, SF:8,
+  PIT:9, TEN:9,
+  CHI:10, DEN:10, PHI:10, TB:10,
+  ATL:11, CLE:11, GB:11, LAR:11, NE:11, SEA:11,
+  BAL:13, IND:13, LV:13, NYJ:13,
+  ARI:14, DAL:14
+};
+
+const TEAM_NAMES = {
+  ARI:'Cardinals', ATL:'Falcons', BAL:'Ravens', BUF:'Bills', CAR:'Panthers',
+  CHI:'Bears', CIN:'Bengals', CLE:'Browns', DAL:'Cowboys', DEN:'Broncos',
+  DET:'Lions', GB:'Packers', HOU:'Texans', IND:'Colts', JAX:'Jaguars',
+  KC:'Chiefs', LAC:'Chargers', LAR:'Rams', LV:'Raiders', MIA:'Dolphins',
+  MIN:'Vikings', NE:'Patriots', NO:'Saints', NYG:'Giants', NYJ:'Jets',
+  PHI:'Eagles', PIT:'Steelers', SEA:'Seahawks', SF:'49ers', TB:'Buccaneers',
+  TEN:'Titans', WAS:'Commanders'
+};
+
+/* Week 1 Sunday is Sep 13, 2026; every later week is +7 days.
+   Week 18 Sunday lands on Jan 10, 2027 — the confirmed regular-season finale. */
+const WEEK1_SUNDAY = '2026-09-13';
+
+const KEY_DATES = [
+  { d:'2026-09-09', t:'Season kickoff — Seahawks host Patriots', n:'Wed · NBC' },
+  { d:'2026-09-10', t:'Rams vs 49ers in Melbourne, Australia', n:'Thu · Netflix' },
+  { d:'2026-09-13', t:'Week 1 Sunday slate', n:'Sun' },
+  { d:'2026-11-26', t:'Thanksgiving games (Week 12 — no byes)', n:'Thu' },
+  { d:'2027-01-10', t:'Week 18 — regular season ends', n:'Sun' },
+  { d:'2027-01-16', t:'Wild Card weekend begins', n:'Sat' },
+  { d:'2027-01-31', t:'Conference Championships', n:'Sun' },
+  { d:'2027-02-14', t:'Super Bowl LXI — SoFi Stadium', n:'Sun' }
+];
+
+/* Week 1 fallback, used only if ESPN's feed is unreachable.
+   Times carry an explicit -04:00 (Eastern Daylight) offset so they render
+   correctly for a viewer in any timezone. */
+const WEEK1_FALLBACK = [
+  { d:'2026-09-09T20:20:00-04:00', a:'NE',  h:'SEA', tv:'NBC',     note:'Kickoff Game' },
+  { d:'2026-09-10T20:35:00-04:00', a:'LAR', h:'SF',  tv:'Netflix', note:'Melbourne, Australia' },
+  { d:'2026-09-13T13:00:00-04:00', a:'CHI', h:'CAR', tv:'FOX',     note:'' },
+  { d:'2026-09-13T13:00:00-04:00', a:'BUF', h:'HOU', tv:'CBS',     note:'' },
+  { d:'2026-09-13T20:20:00-04:00', a:'DAL', h:'NYG', tv:'NBC',     note:'Sunday Night Football' },
+  { d:'2026-09-14T20:15:00-04:00', a:'DEN', h:'KC',  tv:'ESPN',    note:'Monday Night Football' }
+];
+
+/* ------------------------------------------------------------------
+   PLAYER BOARD — 2026, standard (non-PPR) scoring.
+
+   rk   my standard-scoring rank (the board order)
+   adp  roughly where the market drafts him (PPR-leaning consensus)
+   tr   tier within position
+   Positive (adp - rk) means the market lets him slide past his value.
+   ------------------------------------------------------------------ */
+const PLAYERS = [
+  // ---------------------------------------------------------- ROUND 1-2
+  {n:"Bijan Robinson",p:"RB",t:"ATL",rk:1,adp:2,tr:1,
+   pro:"Bell-cow on every down with goal-line work locked up. Volume plus touchdown equity is exactly what non-PPR pays for.",
+   con:"Atlanta's offensive line and red-zone play-calling have wobbled, and a shaky game script can cap his carries.",
+   when:"First overall is defensible. Never lasts past pick 3."},
+  {n:"Jahmyr Gibbs",p:"RB",t:"DET",rk:2,adp:1,tr:1,
+   pro:"Explosive enough to score from anywhere, and Detroit's offense produces top-five scoring opportunities weekly.",
+   con:"Still splits early-down snaps, and a chunk of his PPR edge evaporates without reception points.",
+   when:"Top-3 pick. He's the consensus 1.01 in PPR — you can let him go first and be happy."},
+  {n:"Ja'Marr Chase",p:"WR",t:"CIN",rk:3,adp:3,tr:1,
+   pro:"Led the NFL in targets and still went 125-1,412-8 with Burrow limited to eight games. A healthy Burrow means WR1 overall.",
+   con:"Bengals' defense forces shootouts, which is good — but the whole ceiling is chained to Burrow's health.",
+   when:"Top-4. The only receiver worth taking over a workhorse back."},
+  {n:"Christian McCaffrey",p:"RB",t:"SF",prev:"CAR",rk:4,adp:6,tr:1,
+   pro:"When healthy he is still the most complete back alive, and San Francisco funnels every touch through him.",
+   con:"Turns 30 with 450 total touches last season on the odometer. That is a lot of tread.",
+   when:"Late first. Let someone else pay the pick 1-3 premium."},
+  {n:"Jonathan Taylor",p:"RB",t:"IND",rk:5,adp:7,tr:2,
+   pro:"Pure rushing volume and a heavy goal-line share — the archetype that gains the most in standard scoring.",
+   con:"Barely used in the passing game, so a negative game script can strand him at nine carries.",
+   when:"Picks 4-8. In non-PPR he deserves to go ahead of his PPR ADP."},
+  {n:"Puka Nacua",p:"WR",t:"LAR",rk:6,adp:5,tr:1,
+   pro:"Finished first in PPR points last season despite missing a game. Target monster with a massive floor.",
+   con:"A lot of that production is volume on short catches, which is exactly what non-PPR refuses to pay for.",
+   when:"Picks 5-9. Slides a little in standard, but the yardage is real."},
+  {n:"Malik Nabers",p:"WR",t:"NYG",rk:7,adp:8,tr:1,
+   pro:"Alpha target share with genuine downfield juice — the yardage and touchdowns travel to any format.",
+   con:"Giants' quarterback play remains the ceiling. Efficiency swings wildly week to week.",
+   when:"Late first, early second."},
+  {n:"James Cook",p:"RB",t:"BUF",rk:8,adp:10,tr:2,
+   pro:"Buffalo's lead back in a top-scoring offense, and he has become a legitimate touchdown finisher.",
+   con:"Josh Allen vultures goal-line carries, which caps the ceiling more than any other RB1's situation.",
+   when:"Picks 8-14."},
+  {n:"Ashton Jeanty",p:"RB",t:"LV",rk:9,adp:11,tr:2,
+   pro:"True three-down workload with contact balance that turns bad blocking into positive yards.",
+   con:"Las Vegas may trail often, and the supporting cast doesn't scare anyone.",
+   when:"Picks 9-15."},
+  {n:"Saquon Barkley",p:"RB",t:"PHI",prev:"NYG",rk:10,adp:14,tr:2,
+   pro:"Elite rushing volume behind the best run-blocking line in football. Big-play equity every carry.",
+   con:"Philadelphia's tush push steals short touchdowns, and the workload history is heavy.",
+   when:"Picks 10-16. Standard scoring likes him more than PPR does."},
+  {n:"De'Von Achane",p:"RB",t:"MIA",rk:11,adp:13,tr:2,
+   pro:"Home-run speed and a heavy touch count in an offense built on tempo.",
+   con:"Small frame, and a large share of his value is receptions — the single biggest non-PPR downgrade on the board.",
+   when:"Picks 12-18 in standard. Full round later than his PPR cost."},
+  {n:"Chase Brown",p:"RB",t:"CIN",rk:12,adp:15,tr:2,
+   pro:"Unchallenged lead back attached to a passing game that keeps defenses out of the box.",
+   con:"Cincinnati's line is average at best, and the touchdown share depends on Burrow staying upright.",
+   when:"Picks 12-18."},
+  {n:"Jeremiyah Love",p:"RB",t:"ARI",rk:13,adp:12,tr:2,
+   pro:"Drafted third overall — the highest a back has gone since Barkley. Immediate three-down role with goal-line work.",
+   con:"Rookie backs get worn down, and Arizona's line is a genuine question mark.",
+   when:"Picks 11-18. The rare rookie worth a second-round pick."},
+  {n:"Omarion Hampton",p:"RB",t:"LAC",rk:14,adp:16,tr:3,
+   pro:"Bruising early-down back with the size Los Angeles wants near the goal line.",
+   con:"Cedes passing downs, so a blowout loss makes him nearly unusable.",
+   when:"Picks 14-22."},
+  {n:"Justin Jefferson",p:"WR",t:"MIN",rk:15,adp:9,tr:1,
+   pro:"Still commanded a 28.5% target share last year. Kyler Murray's arrival should restore the deep game that vanished in 2025.",
+   con:"2025 cratered to 84-1,048-2 on bad quarterback play. Two touchdowns in a full season is a real warning.",
+   when:"Picks 8-14. The best bounce-back bet in the draft, with real risk."},
+  {n:"CeeDee Lamb",p:"WR",t:"DAL",rk:16,adp:17,tr:2,
+   pro:"Two years removed from an overall WR1 finish and still averaged 16.6 PPR points per game as the clear alpha.",
+   con:"George Pickens now takes real target share, and Dallas's game scripts are volatile.",
+   when:"Picks 14-22."},
+  {n:"Nico Collins",p:"WR",t:"HOU",rk:17,adp:18,tr:2,
+   pro:"Trails only Nacua in yards per route run over the last three seasons. Big-play profile that standard scoring loves.",
+   con:"Has missed time in each of the last two seasons, and Houston's line has struggled to protect Stroud.",
+   when:"Picks 15-24."},
+  {n:"Brock Bowers",p:"TE",t:"LV",rk:18,adp:19,tr:1,
+   pro:"Should lead all tight ends in targets. Klint Kubiak arrives from the Super Bowl champion Seahawks and the receiver room around him is thin.",
+   con:"Tight end scoring is touchdown-driven in standard, and Las Vegas may not reach the red zone enough.",
+   when:"Late second. The positional edge is worth it."},
+  {n:"Trey McBride",p:"TE",t:"ARI",rk:19,adp:20,tr:1,
+   pro:"Led all tight ends in targets (169), catches (126), and yards (1,239) with 11 touchdowns at 14.4 half-PPR per game.",
+   con:"Mike LaFleur's first year in Arizona could reshape the offense, and Love's arrival takes goal-line looks.",
+   when:"Late second, early third. Fades slightly in non-PPR — 126 catches stop counting."},
+  {n:"Bucky Irving",p:"RB",t:"TB",rk:20,adp:21,tr:3,
+   pro:"Efficient runner who earned the lead job outright and produces yards independent of blocking.",
+   con:"Tampa Bay likes a committee, and Gainwell's arrival threatens passing-down and short-yardage work.",
+   when:"Picks 18-26."},
+
+  // ------------------------------------------------------------ ROUND 3-5
+  {n:"Amon-Ra St. Brown",p:"WR",t:"DET",rk:21,adp:15,tr:2,
+   pro:"Longest active streak of 15-plus half-PPR points per game seasons at the position — three straight years of absurd consistency.",
+   con:"Built on a mountain of short receptions. No format punishes his profile harder than standard scoring.",
+   when:"Picks 20-28 in non-PPR. Let the PPR drafters pay round-two prices."},
+  {n:"Brian Thomas Jr.",p:"WR",t:"JAX",rk:22,adp:22,tr:2,
+   pro:"Vertical alpha who scores from anywhere on the field. Touchdown equity is exactly what standard rewards.",
+   con:"Boom-or-bust weekly, and Jacksonville's offense can disappear for stretches.",
+   when:"Picks 18-28."},
+  {n:"Josh Allen",p:"QB",t:"BUF",rk:23,adp:24,tr:1,
+   pro:"Finished as the QB1 even in a down passing year. Nobody combines passing upside with rushing touchdown equity like he does.",
+   con:"You are paying a third-round pick for a position you can fill in round ten.",
+   when:"Picks 22-32 if you want the one true difference-maker at QB."},
+  {n:"Derrick Henry",p:"RB",t:"BAL",prev:"TEN",rk:24,adp:26,tr:3,
+   pro:"Still a touchdown machine in a run-first offense. Standard scoring is built for exactly this player.",
+   con:"Age and mileage are extreme, and he offers nothing in the passing game.",
+   when:"Picks 22-32."},
+  {n:"Kyren Williams",p:"RB",t:"LAR",rk:25,adp:29,tr:3,
+   pro:"Locked-in workhorse role and one of the league's most reliable goal-line finishers.",
+   con:"Efficiency is mediocre, and Blake Corum keeps nibbling at the workload.",
+   when:"Picks 24-34."},
+  {n:"Drake London",p:"WR",t:"ATL",rk:26,adp:25,tr:3,
+   pro:"Massive red-zone target with a contested-catch profile that turns into touchdowns.",
+   con:"Atlanta's passing volume is modest and quarterback play remains inconsistent.",
+   when:"Picks 22-32."},
+  {n:"Josh Jacobs",p:"RB",t:"GB",prev:"LV",rk:27,adp:27,tr:3,
+   pro:"Green Bay's clear goal-line back with double-digit touchdown upside every year.",
+   con:"Green Bay rotates backs more than most, and his efficiency has trended down.",
+   when:"Picks 24-34."},
+  {n:"A.J. Brown",p:"WR",t:"PHI",rk:28,adp:28,tr:3,
+   pro:"Elite separator with big-play ability. When Philadelphia throws, he eats.",
+   con:"The Eagles' run-heavy identity caps his target floor, and frustration games happen.",
+   when:"Picks 24-34."},
+  {n:"Kenneth Walker III",p:"RB",t:"SEA",rk:29,adp:33,tr:4,
+   pro:"Explosive between the tackles for the defending Super Bowl champions, with a strong touchdown share.",
+   con:"Zach Charbonnet takes real work, and Walker's injury history is not clean.",
+   when:"Picks 28-40."},
+  {n:"Lamar Jackson",p:"QB",t:"BAL",rk:30,adp:31,tr:1,
+   pro:"As explosive as anyone at the position. Rushing floor makes him nearly matchup-proof.",
+   con:"Down 2025 clouded by injuries, and Baltimore leans on Henry near the goal line.",
+   when:"Picks 28-38."},
+  {n:"Tee Higgins",p:"WR",t:"CIN",rk:31,adp:30,tr:3,
+   pro:"WR20 ADP with a top-six-to-eight ceiling if he plays a full season with his Pro Bowl quarterback. Round-five upside like this is rare.",
+   con:"Injury history is the whole story — he has not strung together a clean season in years.",
+   when:"Picks 28-40. Best risk-adjusted receiver on the board."},
+  {n:"Jameson Williams",p:"WR",t:"DET",rk:32,adp:38,tr:4,
+   pro:"Pure field-stretcher on the league's best offense. Long touchdowns are exactly what standard scoring pays for.",
+   con:"Boom-or-bust weekly, and Detroit spreads the ball between St. Brown, LaPorta and the backs.",
+   when:"Picks 34-46."},
+  {n:"Quinshon Judkins",p:"RB",t:"CLE",rk:33,adp:34,tr:4,
+   pro:"Downhill lead back with goal-line duties in an offense that wants to run.",
+   con:"Cleveland's offense is one of the league's least efficient, which suppresses scoring chances.",
+   when:"Picks 30-42."},
+  {n:"TreVeyon Henderson",p:"RB",t:"NE",rk:34,adp:32,tr:4,
+   pro:"Big-play speed attached to a rising New England offense with Drake Maye ascending.",
+   con:"Shares the backfield with Rhamondre Stevenson, which caps the weekly floor.",
+   when:"Picks 30-42."},
+  {n:"Jaxon Smith-Njigba",p:"WR",t:"SEA",rk:35,adp:23,tr:2,
+   pro:"Target hog for the champs with genuine every-week volume.",
+   con:"Heavily reliant on catch count and yards after catch — a significant non-PPR downgrade.",
+   when:"Picks 30-40 in standard. Costs two rounds more in PPR."},
+  {n:"Jalen Hurts",p:"QB",t:"PHI",rk:36,adp:37,tr:2,
+   pro:"The tush push makes him the most reliable source of rushing touchdowns at the position.",
+   con:"Passing volume is capped by Philadelphia's run-first identity.",
+   when:"Picks 34-46."},
+  {n:"Garrett Wilson",p:"WR",t:"NYJ",rk:37,adp:35,tr:3,
+   pro:"Wins against any coverage and commands a huge target share regardless of who is throwing.",
+   con:"The Jets' quarterback situation keeps torpedoing his touchdown totals.",
+   when:"Picks 32-44."},
+  {n:"Bhayshul Tuten",p:"RB",t:"JAX",rk:38,adp:61,tr:4,
+   pro:"Put up 386 yards and 7 touchdowns as a rookie backup. Travis Etienne left for New Orleans, so the job is his.",
+   con:"Unproven as a full workload back, and Jacksonville could still add competition.",
+   when:"Picks 45-62. The clearest value on the board — draft him a round early."},
+  {n:"Rome Odunze",p:"WR",t:"CHI",rk:39,adp:40,tr:4,
+   pro:"Big-bodied outside receiver whose touchdown rate should climb with Caleb Williams developing.",
+   con:"Chicago spreads targets around, so weekly volume is inconsistent.",
+   when:"Picks 36-48."},
+  {n:"Jayden Daniels",p:"QB",t:"WAS",rk:40,adp:39,tr:2,
+   pro:"Rushing volume gives him a weekly floor most quarterbacks cannot approach.",
+   con:"Takes hits, and Washington's receiving corps outside the top option is thin.",
+   when:"Picks 36-48."},
+
+  // ------------------------------------------------------------ ROUND 5-8
+  {n:"Marvin Harrison Jr.",p:"WR",t:"ARI",rk:41,adp:42,tr:4,
+   pro:"Prototype X receiver with red-zone size. Love's arrival should keep defenses honest.",
+   con:"Has not yet turned talent into consistent fantasy weeks, and McBride dominates targets.",
+   when:"Picks 38-50."},
+  {n:"Chuba Hubbard",p:"RB",t:"CAR",rk:42,adp:44,tr:5,
+   pro:"Carolina's early-down and goal-line back with a genuinely secure role.",
+   con:"Low-scoring offense, and the Panthers' Week 5 bye comes brutally early.",
+   when:"Picks 40-52."},
+  {n:"Travis Etienne",p:"RB",t:"NO",prev:"JAX",rk:43,adp:46,tr:5,
+   pro:"Signed a four-year, $52M deal in New Orleans — that money buys a real workload.",
+   con:"The contract drew criticism for a reason. Efficiency has faded and the Saints' line is average.",
+   when:"Picks 42-55."},
+  {n:"Tyler Warren",p:"TE",t:"IND",rk:44,adp:48,tr:2,
+   pro:"Excellent red-zone weapon and arguably the only tight end outside the top two with 300-point upside.",
+   con:"Going behind Loveland in drafts despite the better role — the market is confused, but so is Indy's offense.",
+   when:"Picks 42-58. Best tight end value after the top two."},
+  {n:"Colston Loveland",p:"TE",t:"CHI",rk:45,adp:45,tr:2,
+   pro:"Ascending athletic tight end in a Bears offense that wants to feature him.",
+   con:"Tight end touchdowns are volatile, and Chicago has real target competition.",
+   when:"Picks 42-56."},
+  {n:"Patrick Mahomes",p:"QB",t:"KC",rk:46,adp:47,tr:2,
+   pro:"Floor is enormous and the touchdown volume always shows up by season's end.",
+   con:"Rushing production has dried up, which caps the ceiling relative to the mobile tier.",
+   when:"Picks 44-58."},
+  {n:"Tucker Kraft",p:"TE",t:"GB",rk:47,adp:52,tr:3,
+   pro:"Yards-after-catch monster who has grown into a genuine red-zone target for Green Bay.",
+   con:"Packers spread the ball around more than any offense in football.",
+   when:"Picks 46-60."},
+  {n:"Ladd McConkey",p:"WR",t:"LAC",rk:48,adp:41,tr:4,
+   pro:"Herbert's most trusted target with real separation skills.",
+   con:"Volume comes on short and intermediate routes — the classic PPR-inflated profile.",
+   when:"Picks 44-56 in standard."},
+  {n:"Isiah Pacheco",p:"RB",t:"KC",rk:49,adp:56,tr:5,
+   pro:"Physical runner attached to the best red-zone offense of the era.",
+   con:"Andy Reid's pass-first scheme has not produced a 1,000-yard back since 2017, and the Week 5 bye is early.",
+   when:"Picks 50-64."},
+  {n:"Joe Burrow",p:"QB",t:"CIN",rk:50,adp:50,tr:2,
+   pro:"When upright he is a top-three fantasy quarterback with elite touchdown volume.",
+   con:"Turf toe limited him to eight games last year. Durability is now a live concern.",
+   when:"Picks 46-60."},
+  {n:"Kaleb Johnson",p:"RB",t:"PIT",rk:51,adp:55,tr:5,
+   pro:"Pittsburgh wants to run, and he profiles as the early-down and short-yardage answer.",
+   con:"Jaylen Warren siphons passing work, and the offense lacks explosiveness.",
+   when:"Picks 50-64."},
+  {n:"Xavier Worthy",p:"WR",t:"KC",rk:52,adp:49,tr:4,
+   pro:"Speed threat with Mahomes throwing — the deep touchdowns carry standard-scoring weight.",
+   con:"Kansas City's target distribution is famously unpredictable week to week.",
+   when:"Picks 46-58."},
+  {n:"Tetairoa McMillan",p:"WR",t:"CAR",rk:53,adp:51,tr:4,
+   pro:"Large-frame receiver who should own Carolina's red-zone looks.",
+   con:"Tied to a low-volume passing attack with limited efficiency.",
+   when:"Picks 48-60."},
+  {n:"Caleb Williams",p:"QB",t:"CHI",rk:54,adp:53,tr:3,
+   pro:"Brings genuine fantasy upside thanks to his mobility and a receiving corps that is finally stocked.",
+   con:"Still inconsistent, and Chicago's offensive line has not been fixed.",
+   when:"Picks 50-64."},
+  {n:"D'Andre Swift",p:"RB",t:"CHI",rk:55,adp:60,tr:5,
+   pro:"Holds the lead role in an improving Chicago offense with real scoring chances.",
+   con:"Never been a reliable goal-line back, which is the whole game in standard.",
+   when:"Picks 54-68."},
+  {n:"George Pickens",p:"WR",t:"DAL",prev:"PIT",rk:56,adp:54,tr:4,
+   pro:"Elite contested-catch and deep-ball winner. Big plays translate perfectly to non-PPR.",
+   con:"Volatile week to week, and Lamb commands the primary target share.",
+   when:"Picks 50-64."},
+  {n:"Trevor Lawrence",p:"QB",t:"JAX",rk:57,adp:58,tr:3,
+   pro:"Traditional pocket passer with a stable floor and improving weapons.",
+   con:"Almost no rushing production, which is the difference between QB8 and QB16.",
+   when:"Picks 54-70."},
+  {n:"Cam Skattebo",p:"RB",t:"NYG",rk:58,adp:62,tr:5,
+   pro:"Punishing short-yardage runner who should own the goal line in New York.",
+   con:"Limited explosiveness, and the Giants' offense is still a work in progress.",
+   when:"Picks 56-70."},
+  {n:"Justin Herbert",p:"QB",t:"LAC",rk:59,adp:59,tr:3,
+   pro:"Big arm and steady volume in an offense that finally has weapons.",
+   con:"Run-leaning game plans suppress his passing attempts.",
+   when:"Picks 55-70."},
+  {n:"Jordyn Tyson",p:"WR",t:"NO",rk:60,adp:57,tr:4,
+   pro:"Selected eighth overall and lines up for a substantial target share as arguably the best receiving option outside Chris Olave.",
+   con:"Rookie receivers are volatile, and New Orleans' passing offense is unproven.",
+   when:"Picks 54-68."},
+
+  // ----------------------------------------------------------- ROUND 8-12
+  {n:"Rhamondre Stevenson",p:"RB",t:"NE",rk:61,adp:70,tr:6,
+   pro:"Still the between-the-tackles and goal-line option in a New England offense on the rise.",
+   con:"Henderson takes the explosive plays, and ball security has been an issue.",
+   when:"Picks 64-80."},
+  {n:"Christian Watson",p:"WR",t:"GB",rk:62,adp:74,tr:5,
+   pro:"Age 27 and in his prime, with four touchdowns over the final five games and 11 explosive plays on just 35 catches.",
+   con:"Injury history is long, and Green Bay's target committee is crowded.",
+   when:"Picks 66-84. A genuine breakout bet."},
+  {n:"Chris Olave",p:"WR",t:"NO",rk:63,adp:65,tr:5,
+   pro:"Polished route runner who commands targets whenever he is on the field.",
+   con:"Concussion history is serious, and Tyson now competes for looks.",
+   when:"Picks 60-76."},
+  {n:"Jaylen Waddle",p:"WR",t:"MIA",rk:64,adp:64,tr:5,
+   pro:"Speed threat capable of a 70-yard score any week.",
+   con:"Touchdown regression has bitten him repeatedly and Miami's offense has slipped.",
+   when:"Picks 58-74."},
+  {n:"Kenneth Gainwell",p:"RB",t:"TB",prev:"PHI",rk:65,adp:78,tr:6,
+   pro:"Coming off 73 catches and a career-best 4.7 yards per carry with six scores inside the ten, joining a Bucs team that loves targeting backs.",
+   con:"Most of his value is receiving — the profile standard scoring discounts hardest.",
+   when:"Picks 70-90 in non-PPR. Much better in PPR."},
+  {n:"Jared Goff",p:"QB",t:"DET",rk:66,adp:68,tr:3,
+   pro:"Massive touchdown volume in one of the league's best offenses.",
+   con:"Zero rushing floor and noticeably worse on the road.",
+   when:"Picks 62-80."},
+  {n:"Dak Prescott",p:"QB",t:"DAL",rk:67,adp:69,tr:3,
+   pro:"One of the safest bets for steady passing production with two strong receivers.",
+   con:"Injury history and a Week 14 bye that lands in the fantasy playoffs.",
+   when:"Picks 62-80."},
+  {n:"Zach Charbonnet",p:"RB",t:"SEA",rk:68,adp:76,tr:6,
+   pro:"Handles goal-line work for the champs and is one Walker injury from RB1 value.",
+   con:"Capped while Walker is healthy.",
+   when:"Picks 70-88. Best handcuff in football."},
+  {n:"Tony Pollard",p:"RB",t:"TEN",rk:69,adp:72,tr:6,
+   pro:"Lead back with a defined role and enough burst to break long runs.",
+   con:"Tennessee's offense produces few scoring chances.",
+   when:"Picks 66-82."},
+  {n:"Kyler Murray",p:"QB",t:"MIN",prev:"ARI",rk:70,adp:73,tr:3,
+   pro:"Signed with Minnesota and inherits Justin Jefferson. Rushing production gives him a real weekly floor.",
+   con:"New system, and his deep-ball accuracy has been inconsistent for years.",
+   when:"Picks 66-84."},
+  {n:"Travis Hunter",p:"WR",t:"JAX",rk:71,adp:67,tr:5,
+   pro:"Rare athlete whose target share should climb sharply in year two.",
+   con:"Two-way snaps limit his route volume in a way nothing else on this board does.",
+   when:"Picks 62-80."},
+  {n:"Jaylen Warren",p:"RB",t:"PIT",rk:72,adp:80,tr:6,
+   pro:"Efficient runner who would take over as a workhorse if Johnson stumbles.",
+   con:"Currently the change-of-pace back with minimal goal-line work.",
+   when:"Picks 74-92."},
+  {n:"DK Metcalf",p:"WR",t:"PIT",prev:"SEA",rk:73,adp:71,tr:5,
+   pro:"Physical downfield presence with elite touchdown equity when targeted in the red zone.",
+   con:"Pittsburgh's passing volume is low and inconsistent.",
+   when:"Picks 66-82."},
+  {n:"Emeka Egbuka",p:"WR",t:"TB",rk:74,adp:75,tr:5,
+   pro:"Reliable route runner carving out a steady role in a good passing offense.",
+   con:"Third option on his own team in most weeks.",
+   when:"Picks 70-88."},
+  {n:"Bo Nix",p:"QB",t:"DEN",rk:75,adp:79,tr:4,
+   pro:"Sneaky rushing production and a coaching staff that maximizes him.",
+   con:"Denver leans conservative, which caps passing touchdowns.",
+   when:"Picks 72-92."},
+  {n:"Trey Benson",p:"RB",t:"ARI",rk:76,adp:88,tr:6,
+   pro:"Direct handcuff to a rookie workhorse — the most valuable kind of insurance.",
+   con:"Nearly worthless while Love is healthy.",
+   when:"Picks 80-100."},
+  {n:"Javonte Williams",p:"RB",t:"DAL",prev:"DEN",rk:77,adp:82,tr:6,
+   pro:"Holds the early-down job in a Dallas offense that can score in bunches.",
+   con:"Efficiency has never recovered from his knee injury.",
+   when:"Picks 76-94."},
+  {n:"Courtland Sutton",p:"WR",t:"DEN",rk:78,adp:77,tr:5,
+   pro:"Denver's red-zone target of choice with a consistent touchdown rate.",
+   con:"Yardage floor is modest and he needs scores to pay off.",
+   when:"Picks 72-88."},
+  {n:"Jordan Mason",p:"RB",t:"MIN",prev:"SF",rk:79,adp:86,tr:6,
+   pro:"Powerful runner who has produced whenever handed real volume.",
+   con:"Timeshare risk, and Minnesota's backfield plans are unclear.",
+   when:"Picks 80-98."},
+  {n:"Drake Maye",p:"QB",t:"NE",rk:80,adp:83,tr:4,
+   pro:"Ascending passer with legs, and New England's weapons finally match the talent.",
+   con:"Still developing, with real week-to-week variance.",
+   when:"Picks 76-96."},
+
+  // ---------------------------------------------------------- ROUND 12-16
+  {n:"Braelon Allen",p:"RB",t:"NYJ",rk:81,adp:90,tr:7,
+   pro:"Big-bodied back with clear goal-line usage and standalone value.",
+   con:"The Jets' offense limits total scoring opportunities.",
+   when:"Picks 84-102."},
+  {n:"Khalil Shakir",p:"WR",t:"BUF",rk:82,adp:81,tr:6,
+   pro:"Allen's most trusted underneath target with a stable role.",
+   con:"Short-area profile that non-PPR actively penalizes.",
+   when:"Picks 80-98."},
+  {n:"Michael Penix Jr.",p:"QB",t:"ATL",rk:83,adp:92,tr:4,
+   pro:"Big arm with two quality receivers and improving command of the offense.",
+   con:"Atlanta's play-calling has been conservative and inconsistent.",
+   when:"Picks 86-104."},
+  {n:"Ricky Pearsall",p:"WR",t:"SF",rk:84,adp:85,tr:6,
+   pro:"Carved out real snaps in a scheme that manufactures open looks.",
+   con:"San Francisco's target tree is crowded when everyone is healthy.",
+   when:"Picks 80-98."},
+  {n:"Blake Corum",p:"RB",t:"LAR",rk:85,adp:94,tr:7,
+   pro:"Direct backup to a heavy-workload back on a good offense.",
+   con:"Minimal standalone value.",
+   when:"Picks 88-106."},
+  {n:"C.J. Stroud",p:"QB",t:"HOU",rk:86,adp:87,tr:4,
+   pro:"Talented passer with Collins as a genuine number-one target.",
+   con:"Pressure rates have gutted his efficiency the last two seasons.",
+   when:"Picks 82-100."},
+  {n:"Tyjae Spears",p:"RB",t:"TEN",rk:87,adp:96,tr:7,
+   pro:"Explosive complement who would inherit a real role if Pollard misses time.",
+   con:"Durability concerns of his own.",
+   when:"Picks 90-108."},
+  {n:"Dallas Goedert",p:"TE",t:"PHI",rk:88,adp:89,tr:4,
+   pro:"Efficient tight end in a strong offense with red-zone usage.",
+   con:"Philadelphia's run-first identity limits his ceiling badly.",
+   when:"Picks 84-102."},
+  {n:"Brock Purdy",p:"QB",t:"SF",rk:89,adp:93,tr:4,
+   pro:"Efficient in Kyle Shanahan's system with weekly touchdown upside.",
+   con:"Production swings hard with the health of the skill players around him.",
+   when:"Picks 88-106."},
+  {n:"Jauan Jennings",p:"WR",t:"SF",rk:90,adp:91,tr:6,
+   pro:"Physical possession receiver with real red-zone chemistry.",
+   con:"Fourth in the pecking order when San Francisco is fully healthy.",
+   when:"Picks 86-104."},
+  {n:"Jakobi Meyers",p:"WR",t:"LV",prev:"NE",rk:91,adp:95,tr:6,
+   pro:"Steady target share opposite Bowers with reliable hands.",
+   con:"Very few touchdowns for a receiver of his volume.",
+   when:"Picks 90-108."},
+  {n:"Baker Mayfield",p:"QB",t:"TB",prev:"CLE, CAR, LAR",rk:92,adp:97,tr:4,
+   pro:"Aggressive downfield passer who has been a top-ten fantasy quarterback two years running.",
+   con:"Turnover-prone stretches and a Week 10 bye.",
+   when:"Picks 90-110."},
+  {n:"Isaac Guerendo",p:"RB",t:"SF",rk:93,adp:104,tr:7,
+   pro:"Explosive backup on an offense that makes any starting back fantasy-relevant.",
+   con:"Only matters if McCaffrey misses time — though that is hardly unthinkable.",
+   when:"Picks 96-116. The highest-upside handcuff available."},
+  {n:"Hunter Henry",p:"TE",t:"NE",prev:"LAC",rk:94,adp:101,tr:5,
+   pro:"Maye's safety valve near the goal line with a steady touchdown rate.",
+   con:"Low yardage ceiling.",
+   when:"Picks 96-114."},
+  {n:"Matthew Stafford",p:"QB",t:"LAR",prev:"DET",rk:95,adp:99,tr:5,
+   pro:"Still throws with volume and has Nacua to target.",
+   con:"Age and durability, plus a Week 11 bye.",
+   when:"Picks 94-112."},
+  {n:"Keon Coleman",p:"WR",t:"BUF",rk:96,adp:100,tr:6,
+   pro:"Size and contested-catch ability in the league's best scoring offense.",
+   con:"Buffalo spreads targets around too evenly for comfort.",
+   when:"Picks 94-112."},
+  {n:"Cedric Tillman",p:"WR",t:"CLE",rk:97,adp:106,tr:7,
+   pro:"Large target who flashed genuine WR2 production in extended looks.",
+   con:"Cleveland's quarterback play remains the worst in the league.",
+   when:"Picks 100-118."},
+  {n:"Jake Ferguson",p:"TE",t:"DAL",rk:98,adp:103,tr:5,
+   pro:"Reliable middle-of-the-field target for Prescott with red-zone value.",
+   con:"Two receivers ahead of him soak up the scoring chances.",
+   when:"Picks 98-116."},
+  {n:"Adonai Mitchell",p:"WR",t:"IND",rk:99,adp:108,tr:7,
+   pro:"Field-stretching ability with a clear path to more snaps.",
+   con:"Has not yet converted athleticism into consistent production.",
+   when:"Picks 102-120."},
+  {n:"Tank Bigsby",p:"RB",t:"PHI",prev:"JAX",rk:100,adp:110,tr:7,
+   pro:"Powerful runner behind an elite offensive line, one injury from real value.",
+   con:"Barkley's presence caps everything.",
+   when:"Picks 104-122."}
+];
+
+/* ------------------------------------------------------------------
+   DEPTH, HANDCUFFS, KICKERS AND DEFENSES
+
+   Everything from the back half of a 12-team draft down to the last
+   pick. Notes here are deliberately shorter than the top-100 writeups —
+   at this range the job is role and opportunity, not nuance.
+   ------------------------------------------------------------------ */
+PLAYERS.push(
+  // ------------------------------------------------------------ RB depth
+  {n:"Dylan Sampson",p:"RB",t:"CLE",rk:101,adp:112,tr:7,
+   pro:"Direct handcuff to Judkins, and his 33 catches as a rookie give him standalone work already.",
+   con:"Cleveland's offense scores less than almost anyone.",when:"Picks 106-124."},
+  {n:"Jordan James",p:"RB",t:"SF",rk:102,adp:118,tr:7,
+   pro:"Best bet for the number-two job behind McCaffrey, and essentially free right now.",
+   con:"Worthless unless McCaffrey misses time.",when:"Picks 110-130."},
+  {n:"Jaydon Blue",p:"RB",t:"DAL",rk:103,adp:120,tr:7,
+   pro:"Lottery-ticket handcuff attached to an offense that can score in bunches.",
+   con:"Still has to hold off other backs for the backup job.",when:"Picks 112-132."},
+  {n:"Keaton Mitchell",p:"RB",t:"LAC",prev:"BAL",rk:104,adp:124,tr:7,
+   pro:"Mike McDaniel pushed for him specifically and can scheme his speed into space.",
+   con:"Tiny frame and a serious knee injury in his past.",when:"Picks 114-134."},
+  {n:"Ray Davis",p:"RB",t:"BUF",rk:105,adp:126,tr:8,
+   pro:"Handcuff to Cook in the league's best scoring offense.",
+   con:"Josh Allen takes the goal-line work either way.",when:"Picks 116-136."},
+  {n:"Tyrone Tracy Jr.",p:"RB",t:"NYG",rk:106,adp:114,tr:7,
+   pro:"Receiving chops and enough burst to matter if Skattebo stumbles.",
+   con:"Skattebo owns the short-yardage work that scores points.",when:"Picks 108-126."},
+  {n:"MarShawn Lloyd",p:"RB",t:"GB",rk:107,adp:130,tr:8,
+   pro:"Explosive change-of-pace back who would matter instantly if Jacobs went down.",
+   con:"Has not stayed healthy enough to claim a role.",when:"Picks 120-140."},
+  {n:"Jonathon Brooks",p:"RB",t:"CAR",rk:108,adp:132,tr:8,
+   pro:"Cleared and back in the mix, with the staff talking him up. Genuine lead-back talent.",
+   con:"Coming off a major knee injury with Hubbard entrenched.",when:"Picks 120-142."},
+  {n:"Roschon Johnson",p:"RB",t:"CHI",rk:109,adp:136,tr:8,
+   pro:"Short-yardage and goal-line specialist — cheap touchdown equity.",
+   con:"Almost no yardage floor.",when:"Picks 126-146."},
+  {n:"Audric Estime",p:"RB",t:"DEN",rk:110,adp:140,tr:8,
+   pro:"Power back who would take the goal line if Harvey struggles.",
+   con:"Buried on the depth chart today.",when:"Picks 130-150."},
+  {n:"Will Shipley",p:"RB",t:"PHI",rk:111,adp:144,tr:8,
+   pro:"Pass-catching back behind the best run-blocking line in football.",
+   con:"Third in line in Philadelphia.",when:"Picks 132-152."},
+  {n:"Sean Tucker",p:"RB",t:"TB",rk:112,adp:146,tr:8,
+   pro:"Efficient when given carries and could push for a committee share.",
+   con:"Irving and Gainwell are both ahead of him.",when:"Picks 134-154."},
+  {n:"Kimani Vidal",p:"RB",t:"LAC",rk:113,adp:150,tr:8,
+   pro:"Compact runner who flashed real efficiency in limited work.",
+   con:"Hampton and Mitchell both ahead of him.",when:"Picks 138-158."},
+  {n:"Emanuel Wilson",p:"RB",t:"GB",rk:114,adp:154,tr:8,
+   pro:"Has produced whenever Green Bay has handed him volume.",
+   con:"Deep in a crowded backfield.",when:"Picks 142-162."},
+  {n:"Devin Neal",p:"RB",t:"NO",rk:115,adp:156,tr:8,
+   pro:"Would inherit real work if the Etienne signing disappoints.",
+   con:"New Orleans just paid Etienne $52M to be the guy.",when:"Picks 144-164."},
+
+  // ------------------------------------------------------------ WR depth
+  {n:"Jerry Jeudy",p:"WR",t:"CLE",prev:"DEN",rk:116,adp:116,tr:7,
+   pro:"Cleveland's clear number one when the ball is in the air at all.",
+   con:"Quarterback play is the worst in the league.",when:"Picks 108-128."},
+  {n:"Deebo Samuel",p:"WR",t:"WAS",prev:"SF",rk:117,adp:122,tr:7,
+   pro:"Manufactured touches and goal-line carries give him touchdown paths a normal receiver lacks.",
+   con:"Durability and efficiency have both slipped.",when:"Picks 114-134."},
+  {n:"Josh Downs",p:"WR",t:"IND",rk:118,adp:128,tr:7,
+   pro:"Reliable underneath target with a real role.",
+   con:"Slot profile that non-PPR punishes hardest.",when:"Picks 122-142."},
+  {n:"Michael Pittman Jr.",p:"WR",t:"IND",rk:119,adp:125,tr:7,
+   pro:"Big-bodied red-zone target who has posted 100-catch seasons.",
+   con:"Touchdown rate has been erratic and Warren takes red-zone looks.",when:"Picks 118-138."},
+  {n:"Calvin Ridley",p:"WR",t:"TEN",prev:"JAX, ATL",rk:120,adp:127,tr:7,
+   pro:"Still wins deep, and deep balls are worth full price in standard.",
+   con:"Tennessee's offense limits the whole passing game.",when:"Picks 120-140."},
+  {n:"Rashid Shaheed",p:"WR",t:"NO",rk:121,adp:134,tr:8,
+   pro:"Pure speed with genuine 60-yard-touchdown equity every week.",
+   con:"Low target volume makes him touchdown-or-bust.",when:"Picks 126-146."},
+  {n:"Darnell Mooney",p:"WR",t:"ATL",prev:"CHI",rk:122,adp:138,tr:8,
+   pro:"Field-stretcher opposite London with real big-play rate.",
+   con:"Atlanta throws less than most teams.",when:"Picks 130-150."},
+  {n:"Wan'Dale Robinson",p:"WR",t:"NYG",rk:123,adp:142,tr:8,
+   pro:"High target share in New York's short game.",
+   con:"Almost no touchdowns — the worst possible standard-scoring profile.",when:"Picks 140-160."},
+  {n:"Jalen McMillan",p:"WR",t:"TB",rk:124,adp:145,tr:8,
+   pro:"Flashed real red-zone chemistry with Mayfield late last season.",
+   con:"Third or fourth in the Tampa pecking order.",when:"Picks 136-156."},
+  {n:"Marvin Mims Jr.",p:"WR",t:"DEN",rk:125,adp:148,tr:8,
+   pro:"Explosive per-touch producer who is finally getting real snaps.",
+   con:"Denver's offense is deliberately conservative.",when:"Picks 138-158."},
+  {n:"Luther Burden III",p:"WR",t:"CHI",rk:126,adp:152,tr:8,
+   pro:"Yards-after-catch weapon in an offense that is still adding pieces.",
+   con:"Fourth option behind Odunze, Loveland and the backs.",when:"Picks 142-162."},
+  {n:"Xavier Legette",p:"WR",t:"CAR",rk:127,adp:158,tr:8,
+   pro:"Size and speed with a path to snaps opposite McMillan.",
+   con:"Hands and route running have both been shaky.",when:"Picks 148-168."},
+  {n:"Romeo Doubs",p:"WR",t:"GB",rk:128,adp:160,tr:8,
+   pro:"Quietly one of Green Bay's most trusted red-zone targets.",
+   con:"Green Bay's target committee is the most crowded in football.",when:"Picks 150-170."},
+  {n:"Quentin Johnston",p:"WR",t:"LAC",rk:129,adp:162,tr:9,
+   pro:"Size and touchdown equity in an offense adding tempo under McDaniel.",
+   con:"Wildly inconsistent hands.",when:"Picks 152-172."},
+  {n:"Adam Thielen",p:"WR",t:"MIN",prev:"CAR",rk:130,adp:166,tr:9,
+   pro:"Veteran security blanket with red-zone savvy.",
+   con:"Age and a crowded Minnesota target tree.",when:"Picks 156-176."},
+  {n:"Kayshon Boutte",p:"WR",t:"NE",rk:131,adp:168,tr:9,
+   pro:"Grew into real production as Maye ascended.",
+   con:"New England keeps adding pass catchers.",when:"Picks 158-178."},
+  {n:"Alec Pierce",p:"WR",t:"IND",rk:132,adp:170,tr:9,
+   pro:"Leads the league in yards per reception territory — pure deep threat.",
+   con:"Three-catch weeks are the norm.",when:"Picks 160-180."},
+  {n:"Dontayvion Wicks",p:"WR",t:"GB",rk:133,adp:174,tr:9,
+   pro:"Separates well and would move up fast on a Watson injury.",
+   con:"Drops have cost him snaps.",when:"Picks 164-184."},
+  {n:"Tre Harris",p:"WR",t:"LAC",rk:134,adp:176,tr:9,
+   pro:"Contested-catch outside receiver with a clear runway to snaps.",
+   con:"Unproven at the NFL level.",when:"Picks 166-186."},
+  {n:"Elic Ayomanor",p:"WR",t:"TEN",rk:135,adp:180,tr:9,
+   pro:"Physical outside target who should start right away.",
+   con:"Tennessee's passing offense is among the league's worst.",when:"Picks 170-190."},
+
+  // ----------------------------------------------------------- QB depth
+  {n:"Justin Fields",p:"QB",t:"NYJ",prev:"PIT, CHI",rk:136,adp:164,tr:5,
+   pro:"Rushing floor alone makes him startable in a bye-week pinch.",
+   con:"Passing volume and accuracy remain the problem.",when:"Picks 150-175."},
+  {n:"Jordan Love",p:"QB",t:"GB",rk:137,adp:105,tr:5,
+   pro:"Big-play passer with a deep receiving corps and real touchdown upside.",
+   con:"Green Bay's run-heavy tilt caps attempts.",when:"Picks 100-120."},
+  {n:"Tua Tagovailoa",p:"QB",t:"MIA",rk:138,adp:132,tr:5,
+   pro:"Efficient with weapons who score from anywhere.",
+   con:"Concussion history is the whole risk profile.",when:"Picks 126-150."},
+  {n:"J.J. McCarthy",p:"QB",t:"MIN",rk:139,adp:190,tr:6,
+   pro:"Still young, and any injury to Murray puts him back in a strong offense.",
+   con:"Struggled badly in 2025 and has now been passed on the depth chart.",when:"Last two rounds only."},
+  {n:"Geno Smith",p:"QB",t:"LV",prev:"SEA, NYJ",rk:140,adp:172,tr:6,
+   pro:"Steady volume passer with Bowers as a security blanket.",
+   con:"Turnover-prone and no rushing production.",when:"Picks 165-190."},
+  {n:"Cam Ward",p:"QB",t:"TEN",rk:141,adp:178,tr:6,
+   pro:"Improvisational playmaker with sneaky rushing production.",
+   con:"Weakest supporting cast in the league.",when:"Picks 170-192."},
+  {n:"Sam Darnold",p:"QB",t:"SEA",prev:"MIN, CAR, NYJ",rk:142,adp:158,tr:6,
+   pro:"Defending champions' starter with Smith-Njigba to throw to.",
+   con:"Seattle wins with defense and the run.",when:"Picks 150-175."},
+
+  // ----------------------------------------------------------- TE depth
+  {n:"Kyle Pitts",p:"TE",t:"ATL",rk:143,adp:118,tr:5,
+   pro:"Finished second among tight ends in receptions last season — the athletic ceiling finally showed up.",
+   con:"Touchdowns have never followed the yardage.",when:"Picks 112-135."},
+  {n:"Sam LaPorta",p:"TE",t:"DET",rk:144,adp:108,tr:4,
+   pro:"Attached to the best offense in football with a real red-zone role.",
+   con:"Detroit has too many mouths to feed for consistent volume.",when:"Picks 104-124."},
+  {n:"David Njoku",p:"TE",t:"CLE",rk:145,adp:126,tr:5,
+   pro:"Cleveland's most targeted pass catcher when healthy.",
+   con:"The quarterback situation caps everything.",when:"Picks 122-145."},
+  {n:"Dalton Schultz",p:"TE",t:"HOU",prev:"DAL",rk:146,adp:165,tr:6,
+   pro:"Went 82-777-3 for TE11 last year — dependable volume nobody drafts.",
+   con:"Very few touchdowns for a starting tight end.",when:"Picks 158-182."},
+  {n:"Mark Andrews",p:"TE",t:"BAL",rk:147,adp:135,tr:5,
+   pro:"Lamar's red-zone favourite for years running.",
+   con:"Age and a shrinking snap share.",when:"Picks 130-155."},
+  {n:"Jonnu Smith",p:"TE",t:"PIT",prev:"MIA, ATL, NE, TEN",rk:148,adp:155,tr:6,
+   pro:"Manufactured touches and goal-line usage.",
+   con:"Pittsburgh's passing volume is low.",when:"Picks 150-175."},
+  {n:"Isaiah Likely",p:"TE",t:"BAL",rk:149,adp:168,tr:6,
+   pro:"Explosive and would be an immediate TE1 if Andrews missed time.",
+   con:"Splitting snaps caps his weekly floor.",when:"Picks 160-185."},
+  {n:"Greg Dulcich",p:"TE",t:"MIA",prev:"DEN",rk:150,adp:195,tr:7,
+   pro:"Re-signed and now sits atop Miami's depth chart at the position.",
+   con:"Has never stayed healthy or productive for long.",when:"Last two rounds."},
+  {n:"Brenton Strange",p:"TE",t:"JAX",rk:151,adp:182,tr:7,
+   pro:"Full-time role in an offense with real passing volume.",
+   con:"Third option behind Thomas and Hunter.",when:"Picks 172-192."},
+  {n:"Cade Otton",p:"TE",t:"TB",rk:152,adp:186,tr:7,
+   pro:"Mayfield trusts him near the goal line.",
+   con:"Low ceiling in a crowded offense.",when:"Picks 176-196."},
+
+  // --------------------------------------------------------------- KICKERS
+  // Never before the final round or two — the position is close to random.
+  {n:"Brandon Aubrey",p:"K",t:"DAL",rk:153,adp:140,tr:1,
+   pro:"Finished 1st, 1st and 3rd in kicker scoring in his first three seasons. 35-of-44 from 50+ and holds the NFL record with six field goals of 60 or more yards.",
+   con:"Still a kicker — and a Week 14 bye lands in most fantasy playoffs.",
+   when:"The only kicker worth taking a round early. Picks 140-165."},
+  {n:"Cameron Dicker",p:"K",t:"LAC",rk:154,adp:160,tr:1,
+   pro:"All-time NFL leader in field goal accuracy at 93.5%, on an improved offense with indoor home games.",
+   con:"Fewer long attempts than Aubrey.",when:"Last two rounds."},
+  {n:"Chase McLaughlin",p:"K",t:"TB",rk:155,adp:175,tr:2,
+   pro:"Top-seven kicker scoring in each of the last two seasons.",
+   con:"Accuracy dipped to 84% last year from the mid-90s.",when:"Last two rounds."},
+  {n:"Jake Bates",p:"K",t:"DET",rk:156,adp:180,tr:2,
+   pro:"Huge leg attached to the league's highest-scoring offense.",
+   con:"Detroit scores touchdowns instead of kicking field goals.",when:"Last two rounds."},
+  {n:"Harrison Butker",p:"K",t:"KC",rk:157,adp:185,tr:2,
+   pro:"Kansas City stalls in the red zone often enough to feed him attempts.",
+   con:"Week 5 bye is painfully early.",when:"Last round."},
+  {n:"Ka'imi Fairbairn",p:"K",t:"HOU",rk:158,adp:188,tr:2,
+   pro:"Houston's offense bogs down inside the 30 — good news for a kicker.",
+   con:"Touchdown-starved offense cuts both ways.",when:"Last round."},
+  {n:"Jason Sanders",p:"K",t:"MIA",rk:159,adp:192,tr:3,
+   pro:"Steady leg in a dome-heavy schedule.",con:"Miami's offense has slipped.",when:"Last round."},
+  {n:"Tyler Bass",p:"K",t:"BUF",rk:160,adp:194,tr:3,
+   pro:"Buffalo's scoring volume produces extra points in bulk.",
+   con:"Allen's rushing scores replace field goals.",when:"Last round."},
+  {n:"Younghoe Koo",p:"K",t:"ATL",rk:161,adp:196,tr:3,
+   pro:"Accurate indoors with a stable job.",con:"Low-volume offense.",when:"Last round."},
+  {n:"Evan McPherson",p:"K",t:"CIN",rk:162,adp:198,tr:3,
+   pro:"Big leg on an offense that moves the ball at will.",
+   con:"Burrow's health swings his whole season.",when:"Last round."},
+  {n:"Wil Lutz",p:"K",t:"DEN",rk:163,adp:200,tr:3,
+   pro:"Denver's conservative offense settles for kicks constantly.",
+   con:"Altitude helps, weather hurts late.",when:"Last round."},
+  {n:"Jake Elliott",p:"K",t:"PHI",rk:164,adp:202,tr:3,
+   pro:"Philadelphia is always in scoring range.",
+   con:"The tush push turns field goals into touchdowns.",when:"Last round."},
+
+  // ------------------------------------------------------- TEAM DEFENSES
+  {n:"Texans D/ST",p:"DST",t:"HOU",rk:165,adp:130,tr:1,
+   pro:"Top-five fantasy unit two seasons running at 8.7 points per game, and widely expected to be the first defense drafted in 2026.",
+   con:"You are paying a mid-round pick for a position you can stream.",
+   when:"The one defense worth drafting early. Picks 128-150."},
+  {n:"Broncos D/ST",p:"DST",t:"DEN",rk:166,adp:142,tr:1,
+   pro:"Elite pass rush produced 8.4 points per game last season.",
+   con:"Third-toughest schedule over the first six weeks — Chiefs, Jaguars, Rams, 49ers, Chargers, Seahawks.",
+   when:"Picks 140-165, or wait and stream around that opening stretch."},
+  {n:"Browns D/ST",p:"DST",t:"CLE",rk:167,adp:150,tr:1,
+   pro:"8.2 points per game behind one of the league's best front sevens.",
+   con:"The offense hands the defense short fields constantly.",when:"Picks 145-170."},
+  {n:"Seahawks D/ST",p:"DST",t:"SEA",rk:168,adp:148,tr:1,
+   pro:"Highest-scoring DST in 2025, allowing a league-best 17.2 points per game on the way to the title.",
+   con:"Turnover luck rarely repeats two years running.",when:"Picks 145-170."},
+  {n:"Jaguars D/ST",p:"DST",t:"JAX",rk:169,adp:158,tr:2,
+   pro:"7.8 points per game with a genuinely disruptive secondary.",
+   con:"Thin depth if the pass rush gets hurt.",when:"Picks 155-178."},
+  {n:"Eagles D/ST",p:"DST",t:"PHI",rk:170,adp:156,tr:2,
+   pro:"Finished DST7 in back-to-back seasons with elite personnel.",
+   con:"Philadelphia's offense keeps them on the field less.",when:"Picks 152-176."},
+  {n:"Ravens D/ST",p:"DST",t:"BAL",rk:171,adp:164,tr:2,
+   pro:"Always finds takeaways and returns them.",con:"Aging secondary.",when:"Picks 160-184."},
+  {n:"Steelers D/ST",p:"DST",t:"PIT",rk:172,adp:168,tr:2,
+   pro:"T.J. Watt alone guarantees sack production.",
+   con:"Offense gives the ball back too often.",when:"Picks 164-188."},
+  {n:"Vikings D/ST",p:"DST",t:"MIN",rk:173,adp:172,tr:2,
+   pro:"Brian Flores blitzes create sacks and turnovers in bunches.",
+   con:"High-variance scheme gives up big plays.",when:"Picks 168-190."},
+  {n:"Lions D/ST",p:"DST",t:"DET",rk:174,adp:176,tr:3,
+   pro:"Leads in games where the offense forces opponents to throw.",
+   con:"Injuries have gutted the unit two years running.",when:"Stream."},
+  {n:"Chargers D/ST",p:"DST",t:"LAC",rk:175,adp:180,tr:3,
+   pro:"Sound scheme that limits explosive plays.",con:"Few takeaways.",when:"Stream."},
+  {n:"Packers D/ST",p:"DST",t:"GB",rk:176,adp:184,tr:3,
+   pro:"Deep secondary that produces interceptions.",con:"Inconsistent pass rush.",when:"Stream."},
+  {n:"Bills D/ST",p:"DST",t:"BUF",rk:177,adp:186,tr:3,
+   pro:"Plays with leads, which means opponents throw into pressure.",
+   con:"Gives up yardage between the twenties.",when:"Stream."},
+  {n:"49ers D/ST",p:"DST",t:"SF",rk:178,adp:188,tr:3,
+   pro:"Front four generates pressure without blitzing.",con:"Injury-prone unit.",when:"Stream."},
+  {n:"Chiefs D/ST",p:"DST",t:"KC",rk:179,adp:190,tr:3,
+   pro:"Spagnuolo's unit peaks late in the year.",con:"Week 5 bye.",when:"Stream."},
+  {n:"Commanders D/ST",p:"DST",t:"WAS",rk:180,adp:194,tr:4,
+   pro:"Improving front with real young talent.",con:"Still a work in progress.",when:"Stream."}
+);
+
+/* Round-by-round strategy for standard scoring. */
+const ROUND_PLAN = [
+  {r:"Rounds 1-2", p:"Take running backs. In non-PPR the gap between an every-down back and a committee back is the widest edge in the draft. Two of your first three picks should be RBs unless Chase or Nacua falls to you."},
+  {r:"Round 3", p:"Best available between your RB2 and a top-eight receiver. If Bowers or McBride is still there at the turn, the tight end edge is real — but never reach past a starting-caliber back for one."},
+  {r:"Rounds 4-6", p:"Attack receivers with touchdown equity, not catch volume. Big-play profiles (Thomas, Pickens, Metcalf) beat slot possession types like St. Brown and Smith-Njigba once receptions stop counting."},
+  {r:"Rounds 7-9", p:"This is the tight end and quarterback window if you passed earlier. Tyler Warren, Tucker Kraft, Burrow, and Hurts all land here at a fraction of the early-round cost."},
+  {r:"Rounds 10-12", p:"Buy the backfield changes nobody priced in. Bhayshul Tuten inherited Jacksonville's job when Etienne left for New Orleans, and Christian Watson is a healthy-season breakout waiting to happen."},
+  {r:"Rounds 13-15", p:"Handcuffs and lottery tickets. Charbonnet, Guerendo, Benson, and Corum are each one injury from starter volume. Take upside over a third tight end every time."},
+  {r:"Last two rounds", p:"Kicker and defense — and not one pick earlier. Stream both by matchup all year. Never draft a kicker before the final round; the position is close to random."},
+  {r:"Bye-week trap", p:"Week 11 has six teams off (ATL, CLE, GB, LAR, NE, SEA) — the heaviest bye of the year. Do not stack starters there. Week 14 byes (ARI, DAL) land in most fantasy playoff brackets, which is worse."}
+];
+
+/* ==================================================================
+   STATE
+   ================================================================== */
+
+const S = {
+  league: null,
+  leagueId: null,
+  voterId: null,
+  me: { name: '', teamId: null },   // identity, shared across every tab
+  picks: new Set(),
+  meta: null,
+  pendingDates: [],
+  pos: 'ALL',
+  mode: 'list',
+  q: '',
+  fTeam: '',
+  fBye: '',
+  sort: 'rk',
+  synced: false,
+  openPlayer: null,
+  week: 1,
+  schedMode: 'week',
+  games: {},          // week -> array of games
+  loadingWeek: false,
+  club: 'chat',
+  newTeamEmoji: '🏈',
+  powerDraft: null,   // working copy while reordering power rankings
+  revealed: -1        // how many lottery picks are currently shown (-1 = all)
+};
+
+const TEAM_EMOJI = ['🏈','🐐','🔥','⚡','👑','🦅','🐻','🦁','🐺','🦈','🐉','💀',
+                    '🚀','⚔️','🍺','🌮','🦖','🤖','👽','🐍','🎯','💎','🧨','🏴‍☠️'];
+
+/* ==================================================================
+   HELPERS
+   ================================================================== */
+
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
+let toastTimer;
+function toast(msg, isErr) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+/** Parse a plain YYYY-MM-DD as local noon so timezone math never shifts the day. */
+const dayOf = (iso) => new Date(iso + 'T12:00:00');
+
+const fmtDate = (iso, opt) =>
+  dayOf(iso).toLocaleDateString(undefined, opt || { weekday:'short', month:'short', day:'numeric' });
+
+const fmtLong = (iso) =>
+  dayOf(iso).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+
+function weekSunday(w) {
+  const d = dayOf(WEEK1_SUNDAY);
+  d.setDate(d.getDate() + (w - 1) * 7);
+  return d;
+}
+
+function weekRangeLabel(w) {
+  const sun = weekSunday(w);
+  // Week 1 opens on Wednesday (Sep 9, 2026); every other week opens Thursday.
+  const start = new Date(sun); start.setDate(start.getDate() - (w === 1 ? 4 : 3));
+  const end = new Date(sun); end.setDate(end.getDate() + 1);
+  const f = (d) => d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  return f(start) + ' – ' + f(end);
+}
+
+function byesForWeek(w) {
+  return Object.keys(BYES).filter((t) => BYES[t] === w).sort();
+}
+
+function localId() {
+  let id = localStorage.getItem('ffhub_voter');
+  if (!id) {
+    id = Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('ffhub_voter', id);
+  }
+  return id;
+}
+
+async function api(method, payload) {
+  const opts = { method, headers: { 'Content-Type':'application/json' } };
+  let url = API;
+  if (method === 'GET') url += '?id=' + encodeURIComponent(payload.id);
+  else opts.body = JSON.stringify(payload);
+
+  const r = await fetch(url, opts);
+  let data = {};
+  try { data = await r.json(); } catch (_) {}
+  if (!r.ok || !data.ok) throw new Error(data.error || ('HTTP ' + r.status));
+  return data;
+}
+
+/* ==================================================================
+   NAVIGATION
+   ================================================================== */
+
+function show(v) {
+  $$('.view').forEach((el) => el.classList.toggle('on', el.id === 'v-' + v));
+  $$('.navbtn').forEach((el) => el.classList.toggle('on', el.dataset.v === v));
+  if (v === 'sched') renderSched();
+  if (v === 'guide') renderGuide();
+  if (v === 'teams') renderTeams();
+  if (v === 'club') renderClub();
+  if (v === 'poll') renderLottery();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  history.replaceState(null, '', updateHash(v));
+}
+
+function updateHash(v) {
+  const p = new URLSearchParams(location.search);
+  if (S.leagueId) p.set('league', S.leagueId); else p.delete('league');
+  const q = p.toString();
+  return location.pathname + (q ? '?' + q : '') + (v && v !== 'home' ? '#' + v : '');
+}
+
+$('#tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('.navbtn');
+  if (b) show(b.dataset.v);
+});
+$$('.tile').forEach((t) => t.addEventListener('click', () => show(t.dataset.go)));
+
+/* ------------------------------------------------------------ full screen */
+
+$('#btnFull').addEventListener('click', async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch (err) {
+    toast('Full screen unavailable here', true);
+  }
+});
+document.addEventListener('fullscreenchange', () => {
+  const on = !!document.fullscreenElement;
+  $('#btnFull').textContent = on ? '⤡' : '⛶';
+  $('#btnFull').title = on ? 'Exit full screen' : 'Full screen';
+});
+
+/* -------------------------------------------------------------- identity */
+
+const myTeam = () =>
+  (S.league && S.league.teams.find((t) => t.id === S.me.teamId)) || null;
+
+function saveMe() {
+  localStorage.setItem('ffhub_me', JSON.stringify(S.me));
+  renderMe();
+}
+
+function renderMe() {
+  const t = myTeam();
+  $('#meAv').textContent = t ? t.emoji : (S.me.name ? '👤' : '👤');
+  $('#meName').textContent = S.me.name || 'Tap to sign in';
+  $('#meTeam').textContent = t ? t.name : (S.me.name ? 'No team yet' : 'Set your name');
+}
+
+/* Tapping the identity chip jumps to Teams, which is where you claim one. */
+$('#meChip').addEventListener('click', () => {
+  show('teams');
+  setTimeout(() => {
+    const el = $('#whoName');
+    if (el) { el.focus(); el.scrollIntoView({ block:'center', behavior:'smooth' }); }
+  }, 250);
+});
+
+/* ==================================================================
+   HOME
+   ================================================================== */
+
+function renderHome() {
+  $('#keyDates').innerHTML = KEY_DATES.map((k) => `
+    <div class="kd">
+      <b>${esc(fmtDate(k.d, { month:'short', day:'numeric', year:'numeric' }))}</b>
+      <span>${esc(k.t)}</span>
+      <i>${esc(k.n)}</i>
+    </div>`).join('');
+  renderCountdown();
+}
+
+function renderCountdown() {
+  const locked = S.league && S.league.locked;
+  const target = locked ? locked + 'T19:00:00' : '2026-09-09T20:20:00';
+  const label = locked ? 'until the draft' : 'until kickoff';
+
+  $('#heroTitle').textContent = locked
+    ? 'Draft day is set.'
+    : 'Draft season starts now.';
+  $('#heroSub').textContent = locked
+    ? 'The league locked in ' + fmtLong(locked) + '. Study the board — the clock is running.'
+    : 'Pick the draft date together, study the board, and know exactly when every game kicks off — one link for the whole league.';
+
+  const diff = new Date(target) - new Date();
+  const el = $('#countdown');
+  if (diff <= 0) { el.innerHTML = '<div class="pill g">Season is underway 🏈</div>'; return; }
+
+  const d = Math.floor(diff / 864e5);
+  const h = Math.floor(diff / 36e5) % 24;
+  const m = Math.floor(diff / 6e4) % 60;
+  const s = Math.floor(diff / 1e3) % 60;
+  el.innerHTML =
+    [[d,'Days'],[h,'Hours'],[m,'Min'],[s,'Sec']]
+      .map(([v, n]) => `<div class="cdbox"><b>${v}</b><span>${n}</span></div>`).join('') +
+    `<div class="cdbox" style="min-width:auto;display:flex;align-items:center;padding:11px 15px">
+       <span style="letter-spacing:.4px">${label}</span></div>`;
+}
+setInterval(renderCountdown, 1000);
+
+/* ==================================================================
+   POLL
+   ================================================================== */
+
+function renderPendingChips() {
+  const el = $('#newDateChips');
+  if (!S.pendingDates.length) {
+    el.innerHTML = '<span class="hint">No dates yet — add at least two.</span>';
+    return;
+  }
+  el.innerHTML = S.pendingDates.sort().map((d) => `
+    <span class="chip">${esc(fmtDate(d))}
+      <button data-rm="${esc(d)}" aria-label="Remove">×</button></span>`).join('');
+}
+
+$('#newDateChips').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-rm]');
+  if (!b) return;
+  S.pendingDates = S.pendingDates.filter((d) => d !== b.dataset.rm);
+  renderPendingChips();
+});
+
+$('#btnAddDate').addEventListener('click', () => {
+  const v = $('#dateAdd').value;
+  if (!v) return toast('Pick a date first', true);
+  if (S.pendingDates.includes(v)) return toast('Already added', true);
+  S.pendingDates.push(v);
+  $('#dateAdd').value = '';
+  renderPendingChips();
+});
+
+$('#btnWeekends').addEventListener('click', () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  let added = 0;
+  while (added < 6) {
+    d.setDate(d.getDate() + 1);
+    if (d.getDay() === 6 || d.getDay() === 0) {
+      const iso = d.toISOString().slice(0, 10);
+      if (!S.pendingDates.includes(iso)) { S.pendingDates.push(iso); added++; }
+    }
+  }
+  renderPendingChips();
+  toast('Added the next 6 weekend days');
+});
+
+$('#btnCreate').addEventListener('click', async () => {
+  if (S.pendingDates.length < 2) return toast('Add at least two dates', true);
+  const btn = $('#btnCreate');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Creating…';
+  try {
+    const res = await api('POST', {
+      action: 'create',
+      name: $('#newLeagueName').value.trim(),
+      dates: S.pendingDates
+    });
+    S.meta = res.meta;
+    adoptLeague(res.league);
+    toast('Poll created — share the link!');
+  } catch (err) {
+    $('#setupMsg').innerHTML =
+      `<div class="spacer"></div><div class="banner err">⚠️ Could not create the poll: ${esc(err.message)}.
+       If you are opening this file directly from disk, the API is not running — deploy to Vercel first.</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create poll & get link';
+  }
+});
+
+$('#btnJoin').addEventListener('click', () => {
+  const id = $('#joinId').value.trim();
+  if (id) loadLeague(id);
+});
+
+function adoptLeague(league) {
+  S.league = league;
+  S.leagueId = league.id;
+  S.powerDraft = null;   // rebuild from the freshly loaded ranking
+  localStorage.setItem('ffhub_league', league.id);
+
+  const active = $('.view.on');
+  const view = active ? active.id.replace('v-', '') : 'poll';
+  history.replaceState(null, '', updateHash(view));
+
+  renderPoll();
+  renderHome();
+  renderMe();
+  if (view === 'teams') renderTeams();
+  if (view === 'club') renderClub();
+}
+
+async function loadLeague(id, quiet) {
+  try {
+    const res = await api('GET', { id });
+    S.meta = res.meta;
+    adoptLeague(res.league);
+    if (!quiet) toast('Loaded ' + res.league.name);
+    return true;
+  } catch (err) {
+    if (!quiet) toast('Could not load that poll: ' + err.message, true);
+    return false;
+  }
+}
+
+function renderPoll() {
+  const L = S.league;
+  if (!L) {
+    $('#pollSetup').style.display = '';
+    $('#pollLive').style.display = 'none';
+    renderPendingChips();
+    return;
+  }
+
+  $('#pollSetup').style.display = 'none';
+  $('#pollLive').style.display = '';
+  $('#leagueName').textContent = L.name;
+  $('#pollTitle').textContent = L.name;
+
+  const voters = Object.values(L.votes || {});
+  const total = voters.length;
+  $('#pollStatus').textContent =
+    total === 0 ? 'No votes yet — be the first.'
+    : total + (total === 1 ? ' person has' : ' people have') + ' voted.';
+
+  const url = location.origin + location.pathname + '?league=' + L.id;
+  $('#shareUrl').textContent = url;
+
+  // Restore this device's previous answer, falling back to the saved identity.
+  const mine = L.votes && L.votes[S.voterId];
+  if (!$('#voterName').value) $('#voterName').value = (mine && mine.name) || S.me.name || '';
+  if (mine && S.picks.size === 0) mine.picks.forEach((p) => S.picks.add(p));
+
+  $('#lockedBanner').innerHTML = L.locked
+    ? `<div class="spacer"></div><div class="banner ok">🏆 <div><b>Draft locked in: ${esc(fmtLong(L.locked))}</b>
+       <div style="opacity:.85;margin-top:2px">The countdown on the Home tab is now tracking this date.</div></div></div>`
+    : '';
+
+  if (S.meta && S.meta.ephemeral) {
+    $('#lockedBanner').innerHTML +=
+      `<div class="spacer"></div><div class="banner warn">⚠️ <div><b>Storage is not configured yet.</b>
+       <div style="opacity:.9;margin-top:2px">Votes are held in memory and will vanish when the server sleeps.
+       Add Upstash/Vercel KV or Supabase environment variables to make them permanent — see the README.</div></div></div>`;
+  }
+
+  // Tally: how many voters marked each date.
+  const counts = {};
+  L.dates.forEach((d) => { counts[d] = []; });
+  voters.forEach((v) => {
+    const t = teamById(v.teamId);
+    const label = (t ? t.emoji + ' ' : '') + v.name;
+    v.picks.forEach((p) => { if (counts[p]) counts[p].push(label); });
+  });
+  const best = Math.max(0, ...L.dates.map((d) => counts[d].length));
+
+  $('#voteGrid').innerHTML = L.dates.length === 0
+    ? '<div class="empty"><div class="ico">📅</div>No dates yet — add one below.</div>'
+    : L.dates.map((d) => {
+        const c = counts[d].length;
+        const pct = total ? Math.round((c / total) * 100) : 0;
+        const isBest = c > 0 && c === best;
+        return `
+        <button class="vopt ${S.picks.has(d) ? 'picked' : ''} ${isBest ? 'win' : ''}" data-d="${esc(d)}">
+          <div class="vfill" style="width:${pct}%"></div>
+          ${isBest ? '<div class="crown">👑</div>' : '<div class="checkmk">✓</div>'}
+          <div class="vday">${esc(fmtDate(d, { weekday:'long' }))}</div>
+          <div class="vdate">${esc(fmtDate(d, { month:'short', day:'numeric' }))}</div>
+          <div class="vbot">
+            <span class="vpct">${pct}%</span>
+            <span class="vcount">${c} of ${total}</span>
+          </div>
+          ${c ? `<div class="vwho">${esc(counts[d].join(', '))}</div>` : ''}
+        </button>`;
+      }).join('');
+
+  const winner = L.dates.filter((d) => counts[d].length === best && best > 0);
+  $('#tally').innerHTML = `
+    <div><b>${total}</b> voted</div>
+    <div><b>${L.dates.length}</b> dates on the table</div>
+    ${best > 0 ? `<div>Leader: <b>${esc(winner.map((w) => fmtDate(w)).join(' / '))}</b> — <b>${Math.round((best/total)*100)}%</b> available</div>` : ''}`;
+
+  const sel = $('#lockSel');
+  sel.innerHTML = '<option value="">— not locked —</option>' +
+    L.dates.map((d) => `<option value="${esc(d)}" ${L.locked === d ? 'selected' : ''}>${esc(fmtDate(d))}</option>`).join('');
+
+  renderLottery();
+  renderMe();
+}
+
+$('#voteGrid').addEventListener('click', (e) => {
+  const b = e.target.closest('.vopt');
+  if (!b) return;
+  const d = b.dataset.d;
+  if (S.picks.has(d)) S.picks.delete(d); else S.picks.add(d);
+  b.classList.toggle('picked', S.picks.has(d));
+});
+
+$('#btnSubmitVote').addEventListener('click', async () => {
+  const name = $('#voterName').value.trim();
+  if (!name) return toast('Add your name first', true);
+  if (!S.picks.size) return toast('Tap at least one date', true);
+  const btn = $('#btnSubmitVote');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const res = await api('POST', {
+      action: 'vote', id: S.leagueId, voter: S.voterId,
+      name, teamId: S.me.teamId, picks: Array.from(S.picks)
+    });
+    S.me.name = name; saveMe();
+    S.league = res.league; renderPoll(); toast('Your dates are in 🏈');
+  } catch (err) { toast('Vote failed: ' + err.message, true); }
+  finally { btn.disabled = false; btn.textContent = 'Submit my dates'; }
+});
+
+$('#btnRefresh').addEventListener('click', () => S.leagueId && loadLeague(S.leagueId));
+
+$('#btnCopy').addEventListener('click', async () => {
+  const url = $('#shareUrl').textContent;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('Link copied — send it to the league');
+  } catch (_) {
+    // Clipboard API needs a secure context; fall back to manual selection.
+    const r = document.createRange();
+    r.selectNodeContents($('#shareUrl'));
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+    toast('Press ⌘/Ctrl+C to copy');
+  }
+});
+
+$('#btnMoreDate').addEventListener('click', async () => {
+  const v = $('#moreDate').value;
+  if (!v) return toast('Pick a date', true);
+  try {
+    const res = await api('POST', { action:'addDates', id:S.leagueId, dates:[v] });
+    S.league = res.league; $('#moreDate').value = ''; renderPoll(); toast('Date added');
+  } catch (err) { toast('Could not add: ' + err.message, true); }
+});
+
+$('#btnLock').addEventListener('click', async () => {
+  const v = $('#lockSel').value;
+  try {
+    const res = await api('POST', { action:'lock', id:S.leagueId, date: v || null });
+    S.league = res.league; renderPoll(); renderHome();
+    toast(v ? 'Draft date locked 🏆' : 'Unlocked');
+  } catch (err) { toast('Could not lock: ' + err.message, true); }
+});
+
+/* ==================================================================
+   DRAFT GUIDE
+   ================================================================== */
+
+$('#posSegs').addEventListener('click', (e) => {
+  const b = e.target.closest('.seg'); if (!b) return;
+  S.pos = b.dataset.p;
+  $$('#posSegs .seg').forEach((x) => x.classList.toggle('on', x === b));
+  renderGuide();
+});
+
+$('#viewSegs').addEventListener('click', (e) => {
+  const b = e.target.closest('.seg'); if (!b) return;
+  S.mode = b.dataset.m;
+  $$('#viewSegs .seg').forEach((x) => x.classList.toggle('on', x === b));
+  renderGuide();
+});
+
+$('#plSearch').addEventListener('input', (e) => {
+  S.q = e.target.value.toLowerCase().trim();
+  renderGuide();
+});
+
+['fTeam', 'fBye', 'fSort'].forEach((id) => {
+  $('#' + id).addEventListener('change', (e) => {
+    if (id === 'fSort') S.sort = e.target.value;
+    else S[id] = e.target.value;
+    renderGuide();
+  });
+});
+
+$('#btnClearF').addEventListener('click', () => {
+  S.q = ''; S.fTeam = ''; S.fBye = ''; S.sort = 'rk'; S.pos = 'ALL';
+  $('#plSearch').value = ''; $('#fTeam').value = ''; $('#fBye').value = ''; $('#fSort').value = 'rk';
+  $$('#posSegs .seg').forEach((x) => x.classList.toggle('on', x.dataset.p === 'ALL'));
+  renderGuide();
+});
+
+/** Populate the team and bye-week filters from whatever is on the board. */
+function fillFilters() {
+  const teams = [...new Set(PLAYERS.map((p) => p.t))]
+    .filter((t) => TEAM_NAMES[t])
+    .sort((a, b) => (TEAM_NAMES[a] || a).localeCompare(TEAM_NAMES[b] || b));
+  $('#fTeam').innerHTML = '<option value="">🏟️ All teams</option>' +
+    teams.map((t) => `<option value="${esc(t)}" ${t === S.fTeam ? 'selected' : ''}>${esc(TEAM_NAMES[t])}</option>`).join('');
+
+  const byes = [...new Set(Object.values(BYES))].sort((a, b) => a - b);
+  $('#fBye').innerHTML = '<option value="">🗓️ Any bye week</option>' +
+    byes.map((w) => `<option value="${w}" ${String(w) === S.fBye ? 'selected' : ''}>Bye week ${w}</option>`).join('');
+}
+
+const FLEX = ['RB', 'WR', 'TE'];
+
+function filtered() {
+  const list = PLAYERS.filter((p) => {
+    if (S.pos === 'FLEX') { if (!FLEX.includes(p.p)) return false; }
+    else if (S.pos !== 'ALL' && p.p !== S.pos) return false;
+
+    if (S.fTeam && p.t !== S.fTeam) return false;
+    if (S.fBye && String(BYES[p.t] || '') !== S.fBye) return false;
+
+    if (S.q) {
+      const hay = [p.n, p.t, p.p, TEAM_NAMES[p.t] || '', p.prev || '', p.college || '']
+        .join(' ').toLowerCase();
+      if (!hay.includes(S.q)) return false;
+    }
+    return true;
+  });
+
+  const by = {
+    rk:   (a, b) => a.rk - b.rk,
+    adp:  (a, b) => a.adp - b.adp,
+    val:  (a, b) => (b.adp - b.rk) - (a.adp - a.rk),
+    name: (a, b) => a.n.localeCompare(b.n),
+  };
+  return list.sort(by[S.sort] || by.rk);
+}
+
+function playerRow(p) {
+  const bye = BYES[p.t];
+  const delta = p.adp - p.rk;
+  const cls = delta >= 6 ? 'val-up' : delta <= -6 ? 'val-dn' : 'val-ev';
+  const sign = delta > 0 ? '+' : '';
+  const tierCls = p.tr === 1 ? 't1' : p.tr === 2 ? 't2' : '';
+  const open = S.openPlayer === p.n;
+  const posRank = PLAYERS.filter((x) => x.p === p.p && x.rk <= p.rk).length;
+
+  return `
+  <div class="pl ${tierCls} ${open ? 'open' : ''}" data-n="${esc(p.n)}">
+    <div class="plrank">${p.rk}</div>
+    <div class="plmain">
+      <div class="plname">${esc(p.n)}
+        <span class="posbadge pos${p.p}">${p.p}${posRank}</span>
+        ${p.injury ? `<span class="pill r">${esc(p.injury)}</span>` : ''}
+      </div>
+      <div class="plmeta">
+        <span>${esc(TEAM_NAMES[p.t] || p.t)}</span>
+        <span>·</span>
+        <span>Bye ${bye || '—'}</span>
+        <span>·</span>
+        <span>Tier ${p.tr}</span>
+        ${p.age ? `<span>·</span><span>${esc(p.age)} yrs</span>` : ''}
+        ${p.exp != null ? `<span>·</span><span>${p.exp === 0 ? 'Rookie' : 'Yr ' + (p.exp + 1)}</span>` : ''}
+      </div>
+    </div>
+    <div class="plright">
+      <div class="plval ${cls}">${sign}${delta} VAL</div>
+      <div class="plrd">ADP ${p.adp}</div>
+    </div>
+    <div class="pdet">
+      <div class="pbox"><h4 class="h-who">● Who he is</h4><p>${esc(whoIs(p))}</p></div>
+      <div class="pbox"><h4 class="h-pro">▲ Why to draft</h4><p>${esc(p.pro)}</p></div>
+      <div class="pbox"><h4 class="h-con">▼ What could go wrong</h4><p>${esc(p.con)}</p></div>
+      <div class="pbox"><h4 class="h-when">◆ When to draft</h4><p>${esc(p.when)}</p></div>
+    </div>
+  </div>`;
+}
+
+/** One-line identity: position, club, history, and anything the live sync added. */
+function whoIs(p) {
+  const POS = { QB:'Quarterback', RB:'Running back', WR:'Wide receiver',
+                TE:'Tight end', K:'Kicker', DST:'Team defense / special teams' };
+  const bits = [];
+  bits.push(p.p === 'DST'
+    ? `${TEAM_NAMES[p.t] || p.t} defense and special teams`
+    : `${POS[p.p] || p.p} for the ${TEAM_NAMES[p.t] || p.t}`);
+  if (p.age) bits.push(`age ${p.age}`);
+  if (p.exp != null) bits.push(p.exp === 0 ? 'rookie' : `${p.exp} ${p.exp === 1 ? 'season' : 'seasons'} of experience`);
+  if (p.college) bits.push(`out of ${p.college}`);
+  let s = bits.join(', ') + '.';
+  if (p.prev) s += ` Previously with ${p.prev}.`;
+  if (p.injury) s += ` Currently listed ${p.injury}.`;
+  if (!p.age && !p.college) s += ' Tap “Sync live rosters” for age, experience and college.';
+  return s;
+}
+
+function renderGuide() {
+  const el = $('#guideBody');
+  const count = $('#guideCount');
+
+  if (S.mode === 'plan') {
+    count.textContent = '';
+    el.innerHTML = `<div class="rounds">` +
+      ROUND_PLAN.map((r) => `<div class="rd"><b>${esc(r.r)}</b><p>${esc(r.p)}</p></div>`).join('') +
+      `</div>`;
+    return;
+  }
+
+  const list = filtered();
+  const byPos = {};
+  PLAYERS.forEach((p) => { byPos[p.p] = (byPos[p.p] || 0) + 1; });
+  count.innerHTML = `Showing <b>${list.length}</b> of ${PLAYERS.length} ranked
+    (${Object.keys(byPos).sort().map((k) => byPos[k] + ' ' + k).join(' · ')})`
+    + (S.synced ? ' · <b>live-synced</b>' : '');
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="ico">🔍</div>No players match those filters.
+      <div class="spacer"></div><button class="btn" id="btnClearF2">✕ Clear filters</button></div>`;
+    const b = $('#btnClearF2');
+    if (b) b.addEventListener('click', () => $('#btnClearF').click());
+    return;
+  }
+
+  if (S.mode === 'tier') {
+    const tiers = {};
+    list.forEach((p) => { (tiers[p.tr] = tiers[p.tr] || []).push(p); });
+    el.innerHTML = Object.keys(tiers).sort((a, b) => a - b).map((t) => `
+      <div class="tierhead"><b>Tier ${t}</b><span>${tiers[t].length} player${tiers[t].length === 1 ? '' : 's'}</span></div>
+      <div class="board">${tiers[t].map(playerRow).join('')}</div>`).join('');
+    return;
+  }
+
+  el.innerHTML = `<div class="board">${list.map(playerRow).join('')}</div>`;
+}
+
+$('#guideBody').addEventListener('click', (e) => {
+  const row = e.target.closest('.pl');
+  if (!row) return;
+  S.openPlayer = S.openPlayer === row.dataset.n ? null : row.dataset.n;
+  renderGuide();
+});
+
+/* Pull the full NFL player universe from Sleeper's public feed. Runs in the
+   browser, so it is not subject to any server-side allowlist.
+   Two jobs: enrich the ranked board with live bio/injury data, and append
+   every other draft-eligible player so nothing on an NFL roster is missing. */
+$('#btnEnrich').addEventListener('click', async () => {
+  const btn = $('#btnEnrich');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Syncing…';
+  try {
+    const r = await fetch('https://api.sleeper.app/v1/players/nfl');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const all = await r.json();
+
+    const DRAFTABLE = ['QB', 'RB', 'WR', 'TE', 'K'];
+    const byName = {};
+    const pool = [];
+    for (const id in all) {
+      const pl = all[id];
+      if (!pl.full_name || !pl.team) continue;          // free agents aren't draftable
+      if (!DRAFTABLE.includes(pl.position)) continue;   // skip linemen, LBs, etc.
+      byName[pl.full_name.toLowerCase()] = pl;
+      pool.push(pl);
+    }
+    if (!pool.length) throw new Error('feed returned no rostered players');
+
+    // 1. Enrich what we already rank.
+    const known = new Set();
+    let moved = 0, flagged = 0;
+    PLAYERS.forEach((p) => {
+      known.add(p.n.toLowerCase());
+      const m = byName[p.n.toLowerCase()];
+      if (!m) return;
+      if (m.team && m.team !== p.t) { p.t = m.team; moved++; }
+      if (m.age) p.age = m.age;
+      if (m.years_exp != null) p.exp = m.years_exp;
+      if (m.college && m.college !== 'null') p.college = m.college;
+      if (m.injury_status) { p.injury = m.injury_status; flagged++; } else delete p.injury;
+    });
+
+    // 2. Append everyone else, ranked below the curated board.
+    let added = 0;
+    const startRank = PLAYERS.length;
+    pool.forEach((m) => {
+      const key = m.full_name.toLowerCase();
+      if (known.has(key)) return;
+      known.add(key);
+      added++;
+      PLAYERS.push({
+        n: m.full_name, p: m.position, t: m.team,
+        rk: startRank + added, adp: startRank + added, tr: 9,
+        age: m.age, exp: m.years_exp,
+        college: (m.college && m.college !== 'null') ? m.college : '',
+        injury: m.injury_status || undefined,
+        unranked: true,
+        pro: 'On an NFL roster and draft-eligible, but outside the ranked board — a deep-league or injury-replacement name rather than a target.',
+        con: 'No defined fantasy role right now. Treat the ordering here as alphabetical noise, not a ranking.',
+        when: 'Undrafted in a standard 12-team league. Watch the waiver wire instead.',
+      });
+    });
+
+    S.synced = true;
+    fillFilters();
+    renderGuide();
+    toast(`Synced — ${added} more players added, ${moved} team change${moved === 1 ? '' : 's'}, ${flagged} injury flag${flagged === 1 ? '' : 's'}`);
+  } catch (err) {
+    toast('Sleeper sync failed: ' + err.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Sync live rosters';
+  }
+});
+
+/* ==================================================================
+   SCHEDULE
+   ================================================================== */
+
+$('#schedMode').addEventListener('click', (e) => {
+  const b = e.target.closest('.seg'); if (!b) return;
+  S.schedMode = b.dataset.s;
+  $$('#schedMode .seg').forEach((x) => x.classList.toggle('on', x === b));
+  renderSched();
+});
+
+$('#btnReloadSched').addEventListener('click', () => {
+  localStorage.removeItem('ffhub_games');
+  S.games = {};
+  fetchWeek(S.week, true);
+});
+
+function cacheGames() {
+  try {
+    localStorage.setItem('ffhub_games', JSON.stringify({ ts: Date.now(), g: S.games }));
+  } catch (_) { /* quota — not worth failing over */ }
+}
+
+function loadCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('ffhub_games') || 'null');
+    if (raw && Date.now() - raw.ts < 6 * 3600 * 1000) S.games = raw.g || {};
+  } catch (_) {}
+}
+
+async function fetchWeek(w, force) {
+  if (S.games[w] && !force) return;
+  S.loadingWeek = true; renderSched();
+  try {
+    const url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard'
+      + '?dates=2026&seasontype=2&week=' + w;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+
+    S.games[w] = (j.events || []).map((ev) => {
+      const c = (ev.competitions && ev.competitions[0]) || {};
+      const cs = c.competitors || [];
+      const home = cs.find((x) => x.homeAway === 'home') || {};
+      const away = cs.find((x) => x.homeAway === 'away') || {};
+      const bc = (c.broadcasts && c.broadcasts[0] && c.broadcasts[0].names) || [];
+      return {
+        iso: ev.date,
+        h: (home.team && home.team.abbreviation) || '',
+        a: (away.team && away.team.abbreviation) || '',
+        hs: home.score, as: away.score,
+        done: !!(ev.status && ev.status.type && ev.status.type.completed),
+        tv: bc.join('/'),
+        note: (c.notes && c.notes[0] && c.notes[0].headline) || ''
+      };
+    }).filter((g) => g.h && g.a);
+
+    cacheGames();
+  } catch (err) {
+    S.games[w] = null; // signals "fetch failed" vs "not loaded yet"
+  } finally {
+    S.loadingWeek = false;
+    renderSched();
+  }
+}
+
+function renderSched() {
+  const el = $('#schedBody');
+
+  if (S.schedMode === 'byes') {
+    const weeks = [...new Set(Object.values(BYES))].sort((a, b) => a - b);
+    el.innerHTML = `
+      <p class="hint" style="margin-bottom:13px">Byes run Weeks 5–14, with none in Week 12 (Thanksgiving).
+        Week 11 is the heaviest with six teams off.</p>
+      <div class="byetable">` +
+      weeks.map((w) => {
+        const teams = byesForWeek(w);
+        return `<div class="byerow"><b>Week ${w} · ${esc(weekRangeLabel(w))} · ${teams.length} team${teams.length === 1 ? '' : 's'}</b>
+          <div>${teams.map((t) => `<span class="byeteam">${esc(t)}</span>`).join('')}</div></div>`;
+      }).join('') + `</div>`;
+    return;
+  }
+
+  const bar = Array.from({ length: 18 }, (_, i) => i + 1).map((w) => `
+    <button class="wk ${w === S.week ? 'on' : ''}" data-w="${w}">
+      <b>${w}</b><span>${esc(weekSunday(w).toLocaleDateString(undefined, { month:'numeric', day:'numeric' }))}</span>
+    </button>`).join('');
+
+  const games = S.games[S.week];
+  let body;
+
+  if (games === undefined) {
+    // Not fetched yet (or fetch in flight) — fetchWeek re-renders when it lands.
+    body = `<div class="empty"><span class="spin"></span><div style="margin-top:10px">Loading Week ${S.week}…</div></div>`;
+  } else if (games === null || !games.length) {
+    // ESPN unreachable or empty — fall back to what we know.
+    const fb = S.week === 1 ? WEEK1_FALLBACK : [];
+    body = `<div class="banner warn" style="margin-top:12px">⚠️ <div>
+        <b>Live game data unavailable.</b>
+        <div style="opacity:.9;margin-top:2px">ESPN's feed did not respond. Week ${S.week} runs
+        <b>${esc(weekRangeLabel(S.week))}</b>. Hit “Reload games” to try again.</div></div></div>`
+      + (fb.length ? renderGameGroups(fb.map((g) => ({
+          iso: g.d, h: g.h, a: g.a, tv: g.tv, note: g.note
+        }))) : '');
+  } else {
+    body = renderGameGroups(games);
+  }
+
+  const byes = byesForWeek(S.week);
+  const byeBar = byes.length
+    ? `<div class="byebar"><b>On bye</b>${byes.map((t) => `<span class="byeteam">${esc(t)}</span>`).join('')}</div>`
+    : '';
+
+  el.innerHTML = `<div class="wkbar">${bar}</div>
+    <div class="row" style="margin:4px 0 2px">
+      <b style="font-size:15px">Week ${S.week}</b>
+      <span class="pill">${esc(weekRangeLabel(S.week))}</span>
+    </div>${byeBar}${body}`;
+}
+
+function renderGameGroups(games) {
+  const groups = {};
+  games.slice().sort((a, b) => new Date(a.iso) - new Date(b.iso)).forEach((g) => {
+    const d = new Date(g.iso);
+    const key = d.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
+    (groups[key] = groups[key] || []).push(g);
+  });
+
+  return Object.keys(groups).map((day) => `
+    <div class="daygrp">
+      <div class="dayhd"><b>${esc(day)}</b><span>${groups[day].length} game${groups[day].length === 1 ? '' : 's'}</span></div>
+      <div class="games">${groups[day].map(gameRow).join('')}</div>
+    </div>`).join('');
+}
+
+function gameRow(g) {
+  const d = new Date(g.iso);
+  const time = d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' });
+  const tz = d.toLocaleTimeString(undefined, { timeZoneName:'short' }).split(' ').pop();
+  const scored = g.done && g.hs != null;
+  return `
+  <div class="gm">
+    <div>
+      <div class="gmteams">
+        <span>${esc(TEAM_NAMES[g.a] || g.a)}</span>
+        <span class="at">at</span>
+        <span>${esc(TEAM_NAMES[g.h] || g.h)}</span>
+        ${scored ? `<span class="pill g">${esc(g.as)}–${esc(g.hs)} F</span>` : ''}
+      </div>
+      <div class="gmnote">
+        ${g.tv ? `<span>📺 ${esc(g.tv)}</span>` : ''}
+        ${g.note ? `<span>${esc(g.note)}</span>` : ''}
+      </div>
+    </div>
+    <div class="gmtime">${esc(time)}<span>${esc(tz)}</span></div>
+  </div>`;
+}
+
+$('#schedBody').addEventListener('click', (e) => {
+  const b = e.target.closest('.wk');
+  if (!b) return;
+  S.week = +b.dataset.w;
+  renderSched();
+  fetchWeek(S.week);
+});
+
+/* ==================================================================
+   SHARED PIECES
+   ================================================================== */
+
+/** Prompt shown on any tab that needs a league to exist first. */
+function needLeague(icon, msg) {
+  return `<div class="card"><div class="empty"><div class="ico">${icon}</div>
+    <div>${esc(msg)}</div><div class="spacer"></div>
+    <button class="btn pri" data-goto="poll">🗓️ Go set up the league</button>
+    </div></div>`;
+}
+
+const teamById = (id) => (S.league && S.league.teams.find((t) => t.id === id)) || null;
+
+/** Small inline "🐐 Gronk Obama" badge used in chat, votes and rankings. */
+function teamBadge(id) {
+  const t = teamById(id);
+  return t ? `<span class="pill g">${esc(t.emoji)} ${esc(t.name)}</span>` : '';
+}
+
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('[data-goto]');
+  if (g) show(g.dataset.goto);
+});
+
+/* ==================================================================
+   TEAMS
+   ================================================================== */
+
+function renderTeams() {
+  const el = $('#teamsBody');
+  if (!S.league) { el.innerHTML = needLeague('🏆', 'Create the league first — then everyone can add their team.'); return; }
+
+  const teams = S.league.teams;
+  const mine = myTeam();
+  const totalMgrs = teams.reduce((n, t) => n + t.managers.length, 0);
+
+  el.innerHTML = `
+    <div class="card">
+      <h3>👤 Who are you?</h3>
+      <div class="hint" style="margin-bottom:11px">Set this once. Your name and team show up on your draft-date vote and every message you post.</div>
+      <div class="row">
+        <div class="grow" style="min-width:170px">
+          <label class="fld" for="whoName">Your name</label>
+          <input type="text" id="whoName" maxlength="40" placeholder="e.g. Isaac" value="${esc(S.me.name)}">
+        </div>
+        <div class="grow" style="min-width:170px">
+          <label class="fld" for="whoTeam">Your team</label>
+          <select id="whoTeam">
+            <option value="">— pick your team —</option>
+            ${teams.map((t) => `<option value="${esc(t.id)}" ${t.id === S.me.teamId ? 'selected' : ''}>${esc(t.emoji)} ${esc(t.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div style="align-self:flex-end"><button class="btn pri" id="btnSaveMe">✅ Save</button></div>
+      </div>
+      ${S.me.name && mine && !mine.managers.some((m) => m.toLowerCase() === S.me.name.toLowerCase())
+        ? `<div class="spacer"></div><div class="banner warn">⚠️ <div>You're set to <b>${esc(mine.name)}</b> but your name isn't on its roster yet.
+             <div style="margin-top:7px"><button class="btn sm" data-join="${esc(mine.id)}">➕ Add me as a co-manager</button></div></div></div>`
+        : ''}
+    </div>
+
+    <div class="card">
+      <h3>➕ Add a team</h3>
+      <div class="row">
+        <div class="grow" style="min-width:190px">
+          <label class="fld" for="ntName">Team name</label>
+          <input type="text" id="ntName" maxlength="44" placeholder="e.g. Gronk Obama">
+        </div>
+        <div class="grow" style="min-width:190px">
+          <label class="fld" for="ntMgrs">Manager(s) — separate with commas</label>
+          <input type="text" id="ntMgrs" maxlength="200" placeholder="e.g. Isaac, Marcus">
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <label class="fld">Pick a logo</label>
+      <div class="empick" id="emPick">
+        ${TEAM_EMOJI.map((e2) => `<button class="emopt ${e2 === S.newTeamEmoji ? 'on' : ''}" data-em="${esc(e2)}">${esc(e2)}</button>`).join('')}
+      </div>
+      <div class="spacer"></div>
+      <button class="btn pri" id="btnAddTeam" style="min-height:48px">🏆 Add this team</button>
+    </div>
+
+    <div class="card">
+      <div class="row" style="margin-bottom:13px">
+        <div class="grow">
+          <h3 style="margin-bottom:2px">🏆 League teams</h3>
+          <div class="hint">${teams.length} team${teams.length === 1 ? '' : 's'} · ${totalMgrs} manager${totalMgrs === 1 ? '' : 's'} total</div>
+        </div>
+        <button class="btn sm" id="btnReloadTeams">🔄 Refresh</button>
+      </div>
+      ${teams.length ? `<div class="teamgrid">${teams.map(teamCard).join('')}</div>`
+        : '<div class="empty"><div class="ico">🏈</div>No teams yet. Add the first one above.</div>'}
+    </div>`;
+}
+
+function teamCard(t) {
+  const isMine = t.id === S.me.teamId;
+  const onIt = S.me.name && t.managers.some((m) => m.toLowerCase() === S.me.name.toLowerCase());
+  return `
+  <div class="teamcard ${isMine ? 'mine' : ''}">
+    ${isMine ? '<div class="tbar"></div>' : ''}
+    <div class="thead">
+      <div class="tlogo">${esc(t.emoji)}</div>
+      <div class="tn">
+        <b>${esc(t.name)}</b>
+        <span>${t.managers.length} manager${t.managers.length === 1 ? '' : 's'}${isMine ? ' · your team' : ''}</span>
+      </div>
+    </div>
+    <div class="mgrs">
+      ${t.managers.length
+        ? t.managers.map((m) => `<span class="mgr"><span class="dot"></span>${esc(m)}
+            <button data-drop="${esc(t.id)}" data-mgr="${esc(m)}" title="Remove ${esc(m)}">×</button></span>`).join('')
+        : '<span class="hint">Nobody on this team yet.</span>'}
+    </div>
+    <div class="row" style="gap:7px;margin-bottom:11px">
+      <input type="text" class="grow" data-mgrinput="${esc(t.id)}" placeholder="Add a co-manager…" maxlength="40" style="min-width:120px">
+      <button class="btn sm" data-addmgr="${esc(t.id)}">➕ Add</button>
+    </div>
+    <div class="tacts">
+      ${!onIt ? `<button class="btn sm" data-join="${esc(t.id)}">🙋 This is my team</button>` : ''}
+      <button class="btn sm" data-rename="${esc(t.id)}">✏️ Rename</button>
+      <button class="btn sm" data-delteam="${esc(t.id)}">🗑️ Remove</button>
+    </div>
+  </div>`;
+}
+
+$('#teamsBody').addEventListener('click', async (e) => {
+  const em = e.target.closest('[data-em]');
+  if (em) {
+    S.newTeamEmoji = em.dataset.em;
+    $$('#emPick .emopt').forEach((x) => x.classList.toggle('on', x === em));
+    return;
+  }
+
+  const t = (sel) => { const b = e.target.closest(`[${sel}]`); return b && b.getAttribute(sel); };
+
+  if (e.target.closest('#btnSaveMe')) {
+    S.me.name = $('#whoName').value.trim().slice(0, 40);
+    S.me.teamId = $('#whoTeam').value || null;
+    saveMe();
+    // Keep the roster honest: claiming a team puts you on it.
+    const mt = myTeam();
+    if (S.me.name && mt && !mt.managers.some((m) => m.toLowerCase() === S.me.name.toLowerCase())) {
+      await act({ action:'joinTeam', teamId: mt.id, manager: S.me.name }, 'Added you to ' + mt.name);
+    } else { toast('Saved 👍'); }
+    renderTeams();
+    return;
+  }
+
+  if (e.target.closest('#btnAddTeam')) {
+    const name = $('#ntName').value.trim();
+    if (!name) return toast('Give the team a name', true);
+    const managers = $('#ntMgrs').value.split(',').map((s) => s.trim()).filter(Boolean);
+    const before = S.league.teams.length;
+    await act({ action:'addTeam', name, emoji:S.newTeamEmoji, managers }, 'Team added 🏆');
+    // Auto-claim the first team you create if you have no team yet.
+    const added = S.league.teams[before];
+    if (added && !S.me.teamId && managers.length) {
+      S.me.name = S.me.name || managers[0];
+      S.me.teamId = added.id;
+      saveMe();
+    }
+    $('#ntName').value = ''; $('#ntMgrs').value = '';
+    renderTeams();
+    return;
+  }
+
+  if (e.target.closest('#btnReloadTeams')) {
+    if (await loadLeague(S.leagueId, true)) renderTeams();
+    return;
+  }
+
+  const joinId = t('data-join');
+  if (joinId) {
+    const who = S.me.name || (prompt('Your name?') || '').trim();
+    if (!who) return;
+    S.me.name = who; S.me.teamId = joinId; saveMe();
+    await act({ action:'joinTeam', teamId: joinId, manager: who }, 'You’re on the roster 🙌');
+    renderTeams();
+    return;
+  }
+
+  const addId = t('data-addmgr');
+  if (addId) {
+    const input = $(`[data-mgrinput="${addId}"]`, $('#teamsBody'));
+    const val = input && input.value.trim();
+    if (!val) return toast('Type a name first', true);
+    await act({ action:'joinTeam', teamId: addId, manager: val }, val + ' added');
+    renderTeams();
+    return;
+  }
+
+  const dropId = t('data-drop');
+  if (dropId) {
+    await act({ action:'leaveTeam', teamId: dropId, manager: e.target.closest('[data-mgr]').getAttribute('data-mgr') }, 'Removed');
+    renderTeams();
+    return;
+  }
+
+  const renId = t('data-rename');
+  if (renId) {
+    const cur = teamById(renId);
+    const next = (prompt('New team name:', cur ? cur.name : '') || '').trim();
+    if (!next) return;
+    await act({ action:'updateTeam', teamId: renId, name: next }, 'Renamed');
+    renderTeams();
+    return;
+  }
+
+  const delId = t('data-delteam');
+  if (delId) {
+    const cur = teamById(delId);
+    if (!confirm(`Remove "${cur ? cur.name : 'this team'}"? This also clears it from votes, awards and rankings.`)) return;
+    if (S.me.teamId === delId) { S.me.teamId = null; saveMe(); }
+    await act({ action:'removeTeam', teamId: delId }, 'Team removed');
+    renderTeams();
+  }
+});
+
+// Enter key submits the per-team co-manager input.
+$('#teamsBody').addEventListener('keydown', (e) => {
+  const inp = e.target.closest('[data-mgrinput]');
+  if (inp && e.key === 'Enter') {
+    e.preventDefault();
+    const id = inp.getAttribute('data-mgrinput');
+    const btn = $(`[data-addmgr="${id}"]`, $('#teamsBody'));
+    if (btn) btn.click();
+  }
+});
+
+/** Fire an API action, refresh local state, and surface any failure. */
+async function act(payload, okMsg) {
+  try {
+    const res = await api('POST', Object.assign({ id: S.leagueId }, payload));
+    S.league = res.league;
+    if (okMsg) toast(okMsg);
+    return true;
+  } catch (err) {
+    toast(err.message, true);
+    return false;
+  }
+}
+
+/* ==================================================================
+   DRAFT ORDER LOTTERY
+   ================================================================== */
+
+function renderLottery() {
+  const el = $('#lotteryBody');
+  if (!el || !S.league) return;
+
+  const teams = S.league.teams;
+  const order = S.league.order;
+
+  // Keep showing an existing order even if the roster drops below two —
+  // removing a team shouldn't make the drawn order disappear from view.
+  if (!order && teams.length < 2) {
+    el.innerHTML = `<div class="empty"><div class="ico">🎲</div>
+      <div>Add at least two teams before drawing the order.</div><div class="spacer"></div>
+      <button class="btn pri" data-goto="teams">🏆 Go to Teams</button></div>`;
+    return;
+  }
+
+  if (!order) {
+    el.innerHTML = `
+      <div class="lottery">
+        <div style="font-size:44px;margin-bottom:8px">🎲</div>
+        <div style="font-size:16px;font-weight:730;margin-bottom:5px">${teams.length} teams in the hat</div>
+        <div class="hint" style="max-width:44ch;margin:0 auto 16px">Draws a random order and locks it for everyone. Anyone can draw, but it only happens once unless it's cleared.</div>
+        <button class="btn gold" id="btnDraw" style="min-height:52px;padding:14px 28px;font-size:15px">🎲 Draw the draft order</button>
+      </div>`;
+    return;
+  }
+
+  const n = order.list.length;
+  const revealing = S.revealed >= 0 && S.revealed < n;
+  const visible = S.revealed < 0 ? n : S.revealed;
+
+  el.innerHTML = `
+    ${revealing ? '<div style="text-align:center"><div class="drumroll">🎲</div><div class="hint">Drawing…</div></div>' : ''}
+    <div class="orderlist">
+      ${order.list.map((id, i) => {
+        // Reveal from the last pick upward, so pick 1 lands last.
+        if (i < n - visible) return '';
+        const t = teamById(id);
+        if (!t) return '';
+        return `<div class="opick ${i === 0 ? 'p1' : ''}">
+          <div class="onum">${i + 1}</div>
+          <div class="oteam"><span class="em">${esc(t.emoji)}</span><span>${esc(t.name)}</span></div>
+          <div class="omgr">${esc(t.managers.join(', ') || '—')}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${!revealing ? `
+      <div class="spacer"></div>
+      <div class="row">
+        <span class="hint">Drawn ${esc(new Date(order.ts).toLocaleString())}</span>
+        <div class="grow"></div>
+        <button class="btn sm" id="btnRedraw">🔁 Draw again</button>
+        <button class="btn sm" id="btnClearOrder">🗑️ Clear</button>
+      </div>` : ''}`;
+}
+
+$('#lotteryBody') && $('#lotteryBody').addEventListener('click', async (e) => {
+  if (e.target.closest('#btnDraw') || e.target.closest('#btnRedraw')) {
+    if (S.league.order && !confirm('Draw a brand new order? The current one is replaced for everyone.')) return;
+    if (!(await act({ action:'drawOrder' }))) return;
+    revealOrder();
+    return;
+  }
+  if (e.target.closest('#btnClearOrder')) {
+    await act({ action:'clearOrder' }, 'Order cleared');
+    S.revealed = -1;
+    renderLottery();
+  }
+});
+
+/** Step the picks in one at a time for the reveal. */
+function revealOrder() {
+  const n = S.league.order.list.length;
+  S.revealed = 0;
+  renderLottery();
+  let i = 0;
+  const tick = () => {
+    i++;
+    S.revealed = i;
+    renderLottery();
+    if (i < n) setTimeout(tick, i === n - 1 ? 900 : 420);
+    else { S.revealed = -1; setTimeout(() => { renderLottery(); toast('Draft order is set 🎲'); }, 400); }
+  };
+  setTimeout(tick, 700);
+}
+
+/* ==================================================================
+   CLUBHOUSE — chat, awards, power rankings, rules
+   ================================================================== */
+
+$('#clubSegs').addEventListener('click', (e) => {
+  const b = e.target.closest('.subseg');
+  if (!b) return;
+  S.club = b.dataset.c;
+  $$('#clubSegs .subseg').forEach((x) => x.classList.toggle('on', x === b));
+  renderClub();
+});
+
+function renderClub() {
+  const el = $('#clubBody');
+  if (!S.league) { el.innerHTML = needLeague('💬', 'Create the league first — the clubhouse is shared with everyone on that link.'); return; }
+  if (S.club === 'awards') return renderAwards(el);
+  if (S.club === 'power') return renderPower(el);
+  if (S.club === 'rules') return renderRules(el);
+  renderChat(el);
+}
+
+/* ------------------------------------------------------------------ chat */
+
+function renderChat(el) {
+  const msgs = S.league.messages.slice().reverse();
+  const t = myTeam();
+  el.innerHTML = `
+    <div class="card">
+      <div class="row" style="margin-bottom:10px">
+        <span class="pill g">${t ? esc(t.emoji) + ' ' + esc(t.name) : '👤 no team set'}</span>
+        <span class="hint">posting as <b>${esc(S.me.name || 'anonymous')}</b></span>
+        <div class="grow"></div>
+        <button class="btn sm" data-goto="teams">✏️ Change</button>
+      </div>
+      <textarea id="msgText" rows="3" placeholder="Trash talk, trade offers, rule arguments…" maxlength="800"></textarea>
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="btn pri" id="btnPost" style="min-height:48px">💬 Post to the board</button>
+        <button class="btn sm" id="btnReloadChat">🔄 Refresh</button>
+        <span class="hint">${msgs.length} message${msgs.length === 1 ? '' : 's'}</span>
+      </div>
+    </div>
+    <div class="card">
+      ${msgs.length ? `<div class="msgs">${msgs.map((m) => `
+        <div class="msg">
+          <div class="msghd"><b>${esc(m.name)}</b>${teamBadge(m.teamId)}<span>${esc(new Date(m.ts).toLocaleString())}</span></div>
+          <p>${esc(m.text)}</p>
+        </div>`).join('')}</div>`
+      : '<div class="empty"><div class="ico">🗣️</div>Nothing yet. Someone start the trash talk.</div>'}
+    </div>`;
+}
+
+/* ---------------------------------------------------------------- awards */
+
+function renderAwards(el) {
+  const teams = S.league.teams;
+  const awards = S.league.awards.slice().sort((a, b) => b.week - a.week || b.ts - a.ts);
+  el.innerHTML = `
+    <div class="card">
+      <h3>🏅 Hand out an award</h3>
+      <div class="hint" style="margin-bottom:11px">Weekly high score, biggest blowout, worst lineup decision — whatever your league wants to immortalise.</div>
+      <div class="row">
+        <div style="min-width:96px">
+          <label class="fld" for="awWeek">Week</label>
+          <input type="number" id="awWeek" min="1" max="18" value="1">
+        </div>
+        <div class="grow" style="min-width:160px">
+          <label class="fld" for="awTitle">Award</label>
+          <input type="text" id="awTitle" maxlength="60" placeholder="e.g. Highest score">
+        </div>
+        <div class="grow" style="min-width:160px">
+          <label class="fld" for="awTeam">Team</label>
+          <select id="awTeam">${teams.map((t) => `<option value="${esc(t.id)}">${esc(t.emoji)} ${esc(t.name)}</option>`).join('')}</select>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <label class="fld" for="awNote">Note (optional)</label>
+      <input type="text" id="awNote" maxlength="240" placeholder="e.g. 178.4 — most in a week this year">
+      <div class="spacer"></div>
+      <button class="btn pri" id="btnAddAward" style="min-height:48px" ${teams.length ? '' : 'disabled'}>🏅 Give the award</button>
+      ${teams.length ? '' : '<div class="spacer"></div><div class="hint">Add teams first.</div>'}
+    </div>
+    <div class="card">
+      <h3>🏅 Trophy case</h3>
+      ${awards.length ? `<div class="awgrid">${awards.map((a) => {
+        const t = teamById(a.teamId);
+        return `<div class="award">
+          <div class="am">${t ? esc(t.emoji) : '🏅'}</div>
+          <div class="ab">
+            <div class="aw">Week ${a.week} · ${esc(a.title)}</div>
+            <b>${t ? esc(t.name) : 'Unknown team'}</b>
+            ${a.note ? `<p>${esc(a.note)}</p>` : ''}
+          </div>
+          <button class="btn sm" data-delaward="${esc(a.id)}" title="Remove">×</button>
+        </div>`;
+      }).join('')}</div>`
+      : '<div class="empty"><div class="ico">🏅</div>No awards yet.</div>'}
+    </div>`;
+}
+
+/* -------------------------------------------------------- power rankings */
+
+function renderPower(el) {
+  const teams = S.league.teams;
+  if (!teams.length) {
+    el.innerHTML = `<div class="card"><div class="empty"><div class="ico">📈</div>
+      <div>Add teams before ranking them.</div><div class="spacer"></div>
+      <button class="btn pri" data-goto="teams">🏆 Go to Teams</button></div></div>`;
+    return;
+  }
+
+  // Start from the saved ranking, then append any team added since.
+  if (!S.powerDraft) {
+    const saved = (S.league.power && S.league.power.list) || [];
+    const known = new Set(saved.map((p) => p.teamId));
+    S.powerDraft = saved.filter((p) => teamById(p.teamId))
+      .concat(teams.filter((t) => !known.has(t.id)).map((t) => ({ teamId: t.id, note: '' })));
+  }
+
+  const p = S.league.power;
+  el.innerHTML = `
+    <div class="card">
+      <div class="row" style="margin-bottom:6px">
+        <div class="grow">
+          <h3 style="margin-bottom:2px">📈 Power rankings</h3>
+          <div class="hint">${p ? 'Last posted ' + esc(new Date(p.ts).toLocaleString()) + (p.author ? ' by ' + esc(p.author) : '') : 'Not posted yet.'}</div>
+        </div>
+      </div>
+      <div class="hint" style="margin-bottom:12px">Move teams with the arrows, add a jab in the note, then publish for the league.</div>
+      <div class="pwlist" id="pwList">
+        ${S.powerDraft.map((row, i) => {
+          const t = teamById(row.teamId);
+          if (!t) return '';
+          return `<div class="pwrow">
+            <div class="pwrank">${i + 1}</div>
+            <div class="pwmain">
+              <b>${esc(t.emoji)} ${esc(t.name)}</b>
+              <input type="text" data-pwnote="${i}" maxlength="240" placeholder="Why they're here…" value="${esc(row.note)}">
+            </div>
+            <div class="pwmove">
+              <button data-pwup="${i}" ${i === 0 ? 'disabled' : ''} title="Move up">▲</button>
+              <button data-pwdn="${i}" ${i === S.powerDraft.length - 1 ? 'disabled' : ''} title="Move down">▼</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="btn pri" id="btnSavePower" style="min-height:48px">📈 Publish rankings</button>
+        <button class="btn sm" id="btnResetPower">↩️ Reset</button>
+      </div>
+    </div>
+    ${p ? `<div class="card"><h3>📌 Currently published</h3>
+      <div class="pwlist">${p.list.map((row, i) => {
+        const t = teamById(row.teamId);
+        return t ? `<div class="pwrow"><div class="pwrank">${i + 1}</div>
+          <div class="pwmain"><b>${esc(t.emoji)} ${esc(t.name)}</b>
+          ${row.note ? `<p>${esc(row.note)}</p>` : ''}</div></div>` : '';
+      }).join('')}</div></div>` : ''}`;
+}
+
+/* ----------------------------------------------------------------- rules */
+
+function renderRules(el) {
+  const r = S.league.rules;
+  const box = (icon, label, key, ph, rows) => `
+    <div class="rulebox">
+      <h4>${icon} ${label}</h4>
+      ${r[key] ? `<p>${esc(r[key])}</p>` : '<p class="none">Nothing set yet.</p>'}
+      <div class="spacer"></div>
+      <textarea data-rule="${key}" rows="${rows || 3}" placeholder="${esc(ph)}">${esc(r[key])}</textarea>
+    </div>`;
+
+  el.innerHTML = `
+    <div class="card">
+      <h3>📜 League constitution</h3>
+      <div class="hint">Anyone with the link can edit this. Settle it once here so it isn't relitigated in week 9.</div>
+    </div>
+    <div class="rulegrid">
+      ${box('🧮', 'Scoring &amp; roster', 'scoring', 'e.g. Standard / non-PPR. 1QB, 2RB, 2WR, 1TE, 1FLEX, K, DST. 6 pts passing TD.', 4)}
+      ${box('💵', 'Buy-in', 'dues', 'e.g. $50 per team, due before the draft. Venmo @commish.', 2)}
+      ${box('🏆', 'Payouts', 'payouts', 'e.g. 1st $350, 2nd $150, 3rd $100, most points $50.', 3)}
+      ${box('💀', 'Last place punishment', 'punishment', 'e.g. Loser gets a tattoo of the winner’s choosing. Under $100, above the knee.', 3)}
+      ${box('📌', 'House rules', 'notes', 'e.g. Trade deadline week 11. Veto needs 6 votes. No collusion, obviously.', 4)}
+    </div>
+    <div class="spacer"></div>
+    <button class="btn pri" id="btnSaveRules" style="min-height:48px">💾 Save the rules</button>`;
+}
+
+/* --------------------------------------------------------- club actions */
+
+$('#clubBody').addEventListener('click', async (e) => {
+  if (e.target.closest('#btnPost')) {
+    const text = $('#msgText').value.trim();
+    if (!text) return toast('Type something first', true);
+    if (!S.me.name) return toast('Set your name on the Teams tab first', true);
+    if (await act({ action:'post', name:S.me.name, teamId:S.me.teamId, text }, 'Posted 💬')) renderClub();
+    return;
+  }
+  if (e.target.closest('#btnReloadChat')) {
+    if (await loadLeague(S.leagueId, true)) renderClub();
+    return;
+  }
+
+  if (e.target.closest('#btnAddAward')) {
+    const title = $('#awTitle').value.trim();
+    if (!title) return toast('Name the award', true);
+    if (await act({ action:'addAward', week:+$('#awWeek').value, title,
+                    teamId:$('#awTeam').value, note:$('#awNote').value.trim() }, 'Award given 🏅')) renderClub();
+    return;
+  }
+  const delAw = e.target.closest('[data-delaward]');
+  if (delAw) {
+    if (await act({ action:'removeAward', awardId: delAw.getAttribute('data-delaward') }, 'Removed')) renderClub();
+    return;
+  }
+
+  const up = e.target.closest('[data-pwup]');
+  const dn = e.target.closest('[data-pwdn]');
+  if (up || dn) {
+    syncPowerNotes();
+    const i = +(up || dn).getAttribute(up ? 'data-pwup' : 'data-pwdn');
+    const j = up ? i - 1 : i + 1;
+    const L = S.powerDraft;
+    [L[i], L[j]] = [L[j], L[i]];
+    renderClub();
+    return;
+  }
+  if (e.target.closest('#btnSavePower')) {
+    syncPowerNotes();
+    if (await act({ action:'setPower', list:S.powerDraft, author:S.me.name }, 'Rankings published 📈')) renderClub();
+    return;
+  }
+  if (e.target.closest('#btnResetPower')) {
+    S.powerDraft = null; renderClub(); return;
+  }
+
+  if (e.target.closest('#btnSaveRules')) {
+    const rules = {};
+    $$('#clubBody [data-rule]').forEach((t) => { rules[t.getAttribute('data-rule')] = t.value; });
+    if (await act({ action:'setRules', rules }, 'Rules saved 📜')) renderClub();
+  }
+});
+
+/** Keep typed notes when the list re-renders after a move. */
+function syncPowerNotes() {
+  $$('#clubBody [data-pwnote]').forEach((inp) => {
+    const i = +inp.getAttribute('data-pwnote');
+    if (S.powerDraft[i]) S.powerDraft[i].note = inp.value;
+  });
+}
+
+/* ==================================================================
+   BOOT
+   ================================================================== */
+
+(async function init() {
+  S.voterId = localId();
+  try {
+    const saved = JSON.parse(localStorage.getItem('ffhub_me') || 'null');
+    if (saved && typeof saved === 'object') S.me = { name: saved.name || '', teamId: saved.teamId || null };
+  } catch (_) {}
+
+  $('#tzLabel').textContent =
+    Intl.DateTimeFormat().resolvedOptions().timeZone || 'your local timezone';
+  $('#tileGuideSub').textContent =
+    PLAYERS.length + ' players ranked for standard scoring with pros, cons, and target rounds.';
+
+  renderHome();
+  renderMe();
+  fillFilters();
+  renderPendingChips();
+  loadCache();
+
+  // Deep link: ?league=<id> is the shareable URL everyone opens.
+  const params = new URLSearchParams(location.search);
+  const id = params.get('league') || localStorage.getItem('ffhub_league');
+  if (id) await loadLeague(id, true);
+  if (!S.league) renderPoll();
+
+  // A team that was deleted elsewhere shouldn't leave a dangling identity.
+  if (S.me.teamId && S.league && !myTeam()) { S.me.teamId = null; saveMe(); }
+  renderMe();
+
+  // Land newcomers on Teams so their first move is claiming a team; people who
+  // already have an identity go straight to the draft-date poll.
+  const hash = location.hash.replace('#', '');
+  if (['teams','poll','guide','sched','club'].includes(hash)) show(hash);
+  else if (params.get('league') && S.league) show(S.me.name ? 'poll' : 'teams');
+
+  fetchWeek(1);
+})();
+</script>
+</body>
+</html>
