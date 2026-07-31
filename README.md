@@ -95,7 +95,7 @@ Create a new Vercel project from this repo and set **Root Directory** to
 - `https://<project>.vercel.app/api/league` — the API
 
 The Vercel **project name** is what appears in the URL, so name it
-`fantasy-2027` and the shared link carries no other branding.
+`fantasy-football-2027` and the shared link carries no other branding.
 
 If the link needs to work for people without a Vercel account, set
 **Settings → Deployment Protection → Vercel Authentication → Disabled**.

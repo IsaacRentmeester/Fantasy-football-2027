@@ -185,7 +185,7 @@ function doCreate(body) {
   return normalize({
     id: newId(),
     v: 0,
-    name: clean(body.name, LIMITS.leagueName) || 'Fantasy 2027',
+    name: clean(body.name, LIMITS.leagueName) || 'Fantasy Football 2027',
     created: Date.now(),
     updated: Date.now(),
     dates: [...new Set(dates)].sort(),
