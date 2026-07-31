@@ -602,7 +602,7 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
   <!-- ============================================================= POLL -->
   <section class="view" id="v-poll">
     <h2 class="sec">Draft date poll</h2>
-    <p class="lede">Every person opens the same link, types their name, and taps every date that works for them. The winning date is the one the most people can actually make.</p>
+    <p class="lede">Tap every day that works for you and hit submit — that's it. The winning day is the one the most people can actually make.</p>
     <div class="spacer"></div>
 
     <div id="pollSetup">
@@ -613,11 +613,13 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
             <label class="fld" for="newLeagueName">League name</label>
             <input type="text" id="newLeagueName" placeholder="Fantasy Football 2027" maxlength="60">
             <div class="spacer"></div>
-            <label class="fld" for="dateAdd">Add candidate dates</label>
+            <label class="fld" for="dateAdd">Add candidate days</label>
             <div class="datepick">
               <input type="date" id="dateAdd" class="grow">
+              <input type="time" id="timeAdd" style="max-width:130px" title="Optional time">
               <button class="btn" id="btnAddDate">Add</button>
             </div>
+            <div class="hint" style="margin-top:6px">Time is optional — leave it blank for a whole day.</div>
             <div class="hint" style="margin-top:8px">Or add a batch:
               <button class="btn sm" id="btnWeekends" style="margin-left:4px">Next 6 weekends</button>
             </div>
@@ -670,7 +672,7 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
           <input type="text" id="voterName" class="grow" placeholder="Who are you?" maxlength="40">
           <button class="btn pri" id="btnSubmitVote">Submit my dates</button>
         </div>
-        <div class="hint" style="margin-top:7px">Tap every date below that works for you, then submit. You can change your answer any time.</div>
+        <div class="hint" style="margin-top:7px">Tap every day that works for you, then submit. You can change your answer any time — no sign-up, no team needed.</div>
 
         <div class="votegrid" id="voteGrid"></div>
         <div class="tally" id="tally"></div>
@@ -686,8 +688,12 @@ footer{border-top:1px solid var(--line);padding:20px 0;text-align:center;color:v
         <div class="spacer"></div>
         <div class="datepick">
           <div class="grow" style="min-width:150px">
-            <label class="fld" for="moreDate">Add a date</label>
+            <label class="fld" for="moreDate">Add a day</label>
             <input type="date" id="moreDate">
+          </div>
+          <div style="min-width:120px">
+            <label class="fld" for="moreTime">Time (optional)</label>
+            <input type="time" id="moreTime">
           </div>
           <button class="btn" id="btnMoreDate">➕ Add option</button>
           <div class="grow" style="min-width:150px">
@@ -1615,8 +1621,15 @@ function toast(msg, isErr) {
   toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
 }
 
-/** Parse a plain YYYY-MM-DD as local noon so timezone math never shifts the day. */
-const dayOf = (iso) => new Date(iso + 'T12:00:00');
+/** Options are "YYYY-MM-DD" or "YYYY-MM-DDTHH:MM". Bare days are parsed at
+    local noon so timezone math never shifts them onto the wrong date. */
+const hasTime = (iso) => typeof iso === 'string' && iso.includes('T');
+const dayOf = (iso) => new Date(hasTime(iso) ? iso : iso + 'T12:00:00');
+
+/** "7:30 PM", or '' when the option is a whole day. */
+const timeOf = (iso) => hasTime(iso)
+  ? dayOf(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  : '';
 
 const fmtDate = (iso, opt) =>
   dayOf(iso).toLocaleDateString(undefined, opt || { weekday:'short', month:'short', day:'numeric' });
@@ -1789,7 +1802,7 @@ function renderPendingChips() {
     return;
   }
   el.innerHTML = S.pendingDates.sort().map((d) => `
-    <span class="chip">${esc(fmtDate(d))}
+    <span class="chip">${esc(fmtDate(d))}${timeOf(d) ? ' · ' + esc(timeOf(d)) : ''}
       <button data-rm="${esc(d)}" aria-label="Remove">×</button></span>`).join('');
 }
 
@@ -1800,12 +1813,14 @@ $('#newDateChips').addEventListener('click', (e) => {
   renderPendingChips();
 });
 
+const withTime = (d, t) => (d && t ? d + 'T' + t : d);
+
 $('#btnAddDate').addEventListener('click', () => {
-  const v = $('#dateAdd').value;
-  if (!v) return toast('Pick a date first', true);
+  const v = withTime($('#dateAdd').value, $('#timeAdd').value);
+  if (!$('#dateAdd').value) return toast('Pick a day first', true);
   if (S.pendingDates.includes(v)) return toast('Already added', true);
   S.pendingDates.push(v);
-  $('#dateAdd').value = '';
+  $('#dateAdd').value = ''; $('#timeAdd').value = '';
   renderPendingChips();
 });
 
@@ -1942,7 +1957,8 @@ function renderPoll() {
           <div class="vfill" style="width:${pct}%"></div>
           ${isBest ? '<div class="crown">👑</div>' : '<div class="checkmk">✓</div>'}
           <div class="vday">${esc(fmtDate(d, { weekday:'long' }))}</div>
-          <div class="vdate">${esc(fmtDate(d, { month:'short', day:'numeric' }))}</div>
+          <div class="vdate">${esc(fmtDate(d, { month:'short', day:'numeric' }))}${
+            timeOf(d) ? ` <span style="font-size:13px;color:var(--gold)">${esc(timeOf(d))}</span>` : ''}</div>
           <div class="vbot">
             <span class="vpct">${pct}%</span>
             <span class="vcount">${c} of ${total}</span>
@@ -1959,7 +1975,7 @@ function renderPoll() {
 
   const sel = $('#lockSel');
   sel.innerHTML = '<option value="">— not locked —</option>' +
-    L.dates.map((d) => `<option value="${esc(d)}" ${L.locked === d ? 'selected' : ''}>${esc(fmtDate(d))}</option>`).join('');
+    L.dates.map((d) => `<option value="${esc(d)}" ${L.locked === d ? 'selected' : ''}>${esc(fmtDate(d))}${timeOf(d) ? ' · ' + esc(timeOf(d)) : ''}</option>`).join('');
 
   renderLottery();
   renderMe();
@@ -2008,11 +2024,11 @@ $('#btnCopy').addEventListener('click', async () => {
 });
 
 $('#btnMoreDate').addEventListener('click', async () => {
-  const v = $('#moreDate').value;
-  if (!v) return toast('Pick a date', true);
+  const v = withTime($('#moreDate').value, $('#moreTime').value);
+  if (!$('#moreDate').value) return toast('Pick a day', true);
   try {
     const res = await api('POST', { action:'addDates', id:S.leagueId, dates:[v] });
-    S.league = res.league; $('#moreDate').value = ''; renderPoll(); toast('Date added');
+    S.league = res.league; $('#moreDate').value = ''; $('#moreTime').value = ''; renderPoll(); toast('Day added');
   } catch (err) { toast('Could not add: ' + err.message, true); }
 });
 
@@ -3198,11 +3214,11 @@ function syncPowerNotes() {
   if (S.me.teamId && S.league && !myTeam()) { S.me.teamId = null; saveMe(); }
   renderMe();
 
-  // Land newcomers on Teams so their first move is claiming a team; people who
-  // already have an identity go straight to the draft-date poll.
+  // Opening the shared link goes straight to the poll — voting should need no
+  // setup at all. Teams are a separate, optional thing.
   const hash = location.hash.replace('#', '');
   if (['teams','poll','guide','sched','club'].includes(hash)) show(hash);
-  else if (params.get('league') && S.league) show(S.me.name ? 'poll' : 'teams');
+  else if (params.get('league') && S.league) show('poll');
 
   fetchWeek(1);
 })();

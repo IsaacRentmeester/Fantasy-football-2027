@@ -185,7 +185,11 @@ async function mutate(id, fn) {
 const clean = (s, max) =>
   typeof s === 'string' ? s.replace(/[\x00-\x1F\x7F]/g, '').trim().slice(0, max) : '';
 
-const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s + 'T12:00:00Z'));
+// A poll option is a day, optionally with a time: 2026-08-15 or 2026-08-15T19:30
+const isDate = (s) =>
+  typeof s === 'string' &&
+  /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(s) &&
+  !isNaN(Date.parse(s.includes('T') ? s + ':00' : s + 'T12:00:00Z'));
 
 const newId = () =>
   (Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6)).toLowerCase();
@@ -262,7 +266,7 @@ const ACTIONS = {
   },
 
   removeDate(doc, body) {
-    const d = clean(body.date, 10);
+    const d = clean(body.date, 16);
     doc.dates = doc.dates.filter((x) => x !== d);
     for (const v of Object.values(doc.votes)) v.picks = v.picks.filter((x) => x !== d);
     if (doc.locked === d) doc.locked = null;
@@ -417,7 +421,7 @@ const ACTIONS = {
 
   lock(doc, body) {
     if (body.date === null) { doc.locked = null; return; }
-    const d = clean(body.date, 10);
+    const d = clean(body.date, 16);
     if (!isDate(d) || !doc.dates.includes(d)) return { error: 'invalid date' };
     doc.locked = d;
   },
