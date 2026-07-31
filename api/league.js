@@ -21,8 +21,40 @@
 
 'use strict';
 
-const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
-const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+/**
+ * Locate Upstash/KV REST credentials whatever they are called.
+ *
+ * Vercel's Upstash integration prefixes every variable with the database name,
+ * so a store called "Football_Fantasy_2027" produces
+ * Football_Fantasy_2027_KV_REST_API_URL rather than KV_REST_API_URL. Matching
+ * on the suffix keeps that working without the user having to rename anything.
+ */
+function findKvCredentials() {
+  const keys = Object.keys(process.env);
+  const isUrl = (k) => /(^|_)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/i.test(k);
+  const val = (k) => (process.env[k] || '').trim();
+
+  const urlKey = keys.filter(isUrl).map((k) => [k, val(k)]).filter(([, v]) => v)[0];
+  if (!urlKey) return { url: '', token: '', urlKey: null, tokenKey: null };
+
+  // Prefer the token sharing this URL's prefix, so two stores can coexist.
+  const prefix = urlKey[0].replace(/(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/i, '');
+  const isToken = (k) => /(^|_)(KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)$/i.test(k);
+  const tokenKey =
+    keys.filter((k) => k.startsWith(prefix) && isToken(k) && val(k))[0] ||
+    keys.filter((k) => isToken(k) && val(k))[0];
+
+  return {
+    url: urlKey[1],
+    token: tokenKey ? val(tokenKey) : '',
+    urlKey: urlKey[0],
+    tokenKey: tokenKey || null,
+  };
+}
+
+const KV = findKvCredentials();
+const KV_URL = KV.url;
+const KV_TOKEN = KV.token;
 // Accept either the base project URL or the REST endpoint — Supabase's dashboard
 // shows both, and pasting the longer one would otherwise double the /rest/v1 path.
 const SB_URL = (process.env.SUPABASE_URL || '')
@@ -461,8 +493,9 @@ module.exports = async function handler(req, res) {
     };
     // Anything storage-shaped that we do NOT recognise — catches typos like
     // SUPERBASE_URL, which would otherwise fail completely silently.
+    meta.kvKeysFound = { url: KV.urlKey, token: KV.tokenKey };
     meta.unrecognised = Object.keys(process.env)
-      .filter((k) => /supa|super|upstash|redis|^kv_/i.test(k))
+      .filter((k) => /supa|super|upstash|redis|kv_|rest_api/i.test(k))
       .filter((k) => !(k in meta.env))
       .sort();
 
